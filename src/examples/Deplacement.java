@@ -54,16 +54,16 @@ public class Deplacement {
 		rover.travel(50);
 		screen(odometer.getPose(), i);
 		
-		rover.rotate(-90);
+		rover.rotate(-90); // positive value rotates left 
 		screen(odometer.getPose(), i);
 		
 		rover.travel(-50, true);
 		screen(odometer.getPose(), i);
 		
-		rover.rotate(270);
+		rover.rotate(270); 
 		screen(odometer.getPose(), i);
 		
-		rover.arc(4.712, 270, true);
+		rover.arc(4.712, 270, true); // if radius is zero, the robot rotates in place 
 		screen(odometer.getPose(), i);
 		
 		Motor.A.setSpeed(20);
@@ -75,8 +75,8 @@ public class Deplacement {
 		
 		while (Motor.A.isMoving()) {
 			rover.rotate(360);
-			Button.LEDPattern(4);
-			Delay.msDelay(50);
+			Button.LEDPattern(4); 
+			Delay.msDelay(50); // wait for the specified number of milliseconds 
 		}
 		
 		rover.stop();
