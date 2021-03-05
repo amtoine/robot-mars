@@ -44,27 +44,27 @@ public class Deplacement {
 		
 		LCD.clear();
 		
-//		System.out.println("Init gyro... ");
-//		Button.LEDPattern(3);
-//		Button.waitForAnyEvent();
-//		Button.LEDPattern(0);
-//		
-//		rover.setLinearSpeed(30);
-//		
-//		rover.travel(50);
-//		screen(odometer.getPose(), i);
-//		
-//		rover.rotate(-90);
-//		screen(odometer.getPose(), i);
-//		
-//		rover.travel(-50, true);
-//		screen(odometer.getPose(), i);
-//		
-//		rover.rotate(270);
-//		screen(odometer.getPose(), i);
-//		
-//		rover.arc(4.712, 270, true);
-//		screen(odometer.getPose(), i);
+		System.out.println("Init gyro... ");
+		Button.LEDPattern(3);
+		Button.waitForAnyEvent();
+		Button.LEDPattern(0);
+		
+		rover.setLinearSpeed(30);
+		
+		rover.travel(50);
+		screen(odometer.getPose(), i);
+		
+		rover.rotate(-90); // positive value rotates left 
+		screen(odometer.getPose(), i);
+		
+		rover.travel(-50, true);
+		screen(odometer.getPose(), i);
+		
+		rover.rotate(270); 
+		screen(odometer.getPose(), i);
+		
+		rover.arc(4.712, 270, true); // if radius is zero, the robot rotates in place 
+		screen(odometer.getPose(), i);
 		
 		Motor.A.setSpeed(20);
 		Motor.A.setAcceleration(200);
