@@ -4,16 +4,20 @@ import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
-import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.hardware.sensor.SensorMode;
 import lejos.robotics.SampleProvider;
+import modes.LandingMode;
+import modes.RoverMode;
 import unit_tests.InternalDoctor;
 
 public class RoverDeploy {
 
-	public static void main(String[] args) throws InterruptedException{
+	public static void main(String[] args) {
 		Rover rover = new Rover(SensorPort.S4, SensorPort.S1,
 				                MotorPort.A, MotorPort.B, MotorPort.C);
+		
+		RoverMode mode = new LandingMode();
+		mode.start(); mode.stop();
 		
 		InternalDoctor.init_peripherals(rover);
 		

@@ -1,35 +1,26 @@
 package unit_tests;
 
-import lejos.hardware.Button;
-import lejos.hardware.motor.Motor;
-import lejos.hardware.motor.NXTRegulatedMotor;
-import lejos.hardware.port.MotorPort;
-import lejos.hardware.port.SensorPort;
-import lejos.hardware.sensor.EV3ColorSensor;
-import lejos.hardware.sensor.EV3UltrasonicSensor;
-import lejos.robotics.RegulatedMotor;
-import rover.Blinker;
+import modes.DiagnosticMode;
+import modes.ErrorMode;
+import modes.RoverMode;
+import rover.Beeper;
 import rover.Rover;
 
 public class InternalDoctor {
 	public static void init_peripherals(Rover rover) {
-		try {
-			Blinker.blink(Blinker.RED, Blinker.FAST, 0);
-			rover.init_ultrasonic_sensor();
-			Blinker.blink(Blinker.RED, Blinker.SLOW, 0);
-			rover.init_color_sensor();
-			Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0);
-			rover.init_right_motor();
-			Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0);
-			rover.init_left_motor();
-			Blinker.blink(Blinker.GREEN, Blinker.FAST, 0);
-			rover.init_pliers_motor();
-			Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-			System.out.println("press any button");
-			Blinker.blink(Blinker.RED, Blinker.STILL, 0);
-			Button.waitForAnyPress();
+		RoverMode mode = new DiagnosticMode();
+		mode.start();
+		int error = 0;
+		if (rover.init_ultrasonic_sensor()) { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  1; }
+		if (rover.init_color_sensor())      { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  2; }
+		if (rover.init_pliers_motor())      { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  4; }
+		if (rover.init_right_motor())       { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  8; }
+		if (rover.init_left_motor())        { Beeper.beep(); } else { Beeper.twoBeeps(); error += 16; }
+		mode.stop();
+		
+		if (error != 0) {
+			mode = new ErrorMode();
+			mode.start();
 			System.exit(1);
 		}
 	}

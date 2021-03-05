@@ -32,4 +32,23 @@ public class Blinker {
 			Button.LEDPattern(0);
 		}
 	}
+	
+	public static void blink(int color, int mode) {
+		int pattern = 0;
+		if (color == BLANK) {
+			pattern = 0;
+		} else if (color == GREEN) {
+			pattern = 1+3*mode;
+		} else if (color == RED) {
+			pattern = 2+3*mode;
+		} else if (color == ORANGE) {
+			pattern = 3+3*mode;
+		}
+		
+		Button.LEDPattern(pattern);
+	}
+	
+	public static void reset() {
+		Button.LEDPattern(0);
+	}
 }

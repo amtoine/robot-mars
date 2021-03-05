@@ -1,15 +1,24 @@
 package modes;
 
+import lejos.hardware.Button;
+import rover.Beeper;
+import rover.Blinker;
+
 public class LandingMode implements RoverMode {
 
-	public void enter_mode() {
-		// TODO Auto-generated method stub
-
+	public LandingMode() {
+		System.out.println("rover has just landed");
+		System.out.println("stand by");
 	}
 
-	public void quit_mode() {
-		// TODO Auto-generated method stub
+	public void start() {
+		Beeper.play(Beeper.LANDING);
+		Blinker.blink(Blinker.GREEN, Blinker.SLOW);
+		Button.waitForAnyPress();
+	}
 
+	public void stop() {
+		Blinker.reset();
 	}
 
 }

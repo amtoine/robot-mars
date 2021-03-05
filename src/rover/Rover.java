@@ -56,42 +56,56 @@ public class Rover {
 		this.left_motor_port   = left_motor_port;
 	}
 	
-	public void init_ultrasonic_sensor() throws Exception {
+	public boolean init_ultrasonic_sensor() {
 		try {
 			this.ultrasonic_sensor = new EV3UltrasonicSensor(this.ultrasonic_port);
+			System.out.println("con. us: ok");
+			return true;
 		} catch (Exception e) {
-			throw new Exception("ultrasonic sensor not connected to port " + this.ultrasonic_port.getName());
+			System.out.println("con. us: ko (" + this.ultrasonic_port.getName() + ")");
+			return false;
 		}
 	}
-	public void init_color_sensor() throws Exception {
+	public boolean init_color_sensor() {
 		try {
 			this.color_sensor = new EV3ColorSensor(this.color_port);
+			System.out.println("con. cs: ok");
+			return true;
 		} catch (Exception e) {
-			throw new Exception("color sensor not connected to port " + this.color_port.getName());
+			System.out.println("con. cs: ko (" + this.color_port.getName() + ")");
+			return false;
 		}
 	}
-	public void init_pliers_motor() throws Exception {
+	public boolean init_pliers_motor() {
 		try {
 			this.pliers_motor = new NXTRegulatedMotor(this.pliers_motor_port);
+			System.out.println("con. pliers: ok");
+			return true;
 		} catch (Exception e) {
-			throw new Exception("pliers motor not connected to port " + this.pliers_motor_port.getName());
+			System.out.println("con. pliers: ko (" + this.pliers_motor_port.getName() + ")");
+			return false;
 		}
 	}
-	public void init_right_motor() throws Exception {
+	public boolean init_right_motor() {
 		try {
 			this.right_motor = new NXTRegulatedMotor(this.right_motor_port);
+			System.out.println("con. right: ok");
+			return true;
 		} catch (Exception e) {
-			throw new Exception("right motor not connected to port " + this.right_motor_port.getName());
+			System.out.println("con. right: ko (" + this.right_motor_port.getName() + ")");
+			return false;
 		}
 	}
-	public void init_left_motor() throws Exception {
+	public boolean init_left_motor() {
 		try {
 			this.left_motor = new NXTRegulatedMotor(this.left_motor_port);
+			System.out.println("con. left: ok");
+			return true;
 		} catch (Exception e) {
-			throw new Exception("left motor not connected to port " + this.left_motor_port.getName());
+			System.out.println("con. left: ko (" + this.left_motor_port.getName() + ")");
+			return false;
 		}
 	}
-	
 	
 	public void set_ultrasonic_sensor(EV3UltrasonicSensor ultrasonic_sensor) {
 		this.ultrasonic_sensor = ultrasonic_sensor;
