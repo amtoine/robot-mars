@@ -1,6 +1,5 @@
 package modes;
 
-import lejos.hardware.Button;
 import rover.Beeper;
 import rover.Blinker;
 
@@ -12,7 +11,7 @@ import rover.Blinker;
  */
 public class LandingMode implements RoverMode {
 	/**
-	 * Starts the landing mode. (blocking method)
+	 * Starts the landing mode.
 	 * When the rover lands on the surface of Mars, it enters the landing mode and waits for any button press. This is the
 	 * proper method to use to trigger 'landing' sound and light effects.
 	 */
@@ -22,7 +21,6 @@ public class LandingMode implements RoverMode {
 		
 		Beeper.play(LandingMode.LANDING);
 		Blinker.blink(Blinker.GREEN, Blinker.SLOW);
-		Button.waitForAnyPress();
 	}
 
 	/**

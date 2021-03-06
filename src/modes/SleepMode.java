@@ -1,6 +1,5 @@
 package modes;
 
-import lejos.hardware.Button;
 import rover.Beeper;
 import rover.Blinker;
 
@@ -12,7 +11,7 @@ import rover.Blinker;
  */
 public class SleepMode implements RoverMode {
 	/**
-	 * Starts the sleep mode. (blocking method)
+	 * Starts the sleep mode.
 	 * When the rover needs to sleep after completing its tasks, it enters the sleep mode. This is the proper method to
 	 * use to trigger 'sleep' sound and light effects.
 	 */
@@ -22,7 +21,6 @@ public class SleepMode implements RoverMode {
 		
 		Beeper.play(SleepMode.SLEEP);
 		Blinker.blink(Blinker.ORANGE, Blinker.STILL);
-		Button.waitForAnyPress();
 	}
 
 	/**

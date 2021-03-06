@@ -78,7 +78,7 @@ public class Blinker {
 	public static int FAST = 2;
 	
 	/**
-	 * Starts a blink sequence. (can be a blocking method)
+	 * Starts a blink sequence (can be a blocking method).
 	 * To indicate modes or make the rover more friendly, one could want to have the LEDs blinking. Simply give blink()
 	 * a color, a blink mode and a total duration.
 	 * To use a simplified version of blink, see {@link #blink(int, int)}.
