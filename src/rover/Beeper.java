@@ -29,7 +29,7 @@ public class Beeper {
 	public static int HIGH_PITCH = 880;
 	
 	/**
-	 * Plays an alarm for some amount of time. (blocking method)
+	 * Plays an alarm for some amount of time (blocking method).
 	 * When given a frequency and a total duration, {@link #alarm(int, int)} computes the period between two beeps and play
 	 * the right amount of beeps so that the alarm plays during duration.
 	 *  
@@ -109,7 +109,7 @@ public class Beeper {
 	}
 	
 	/**
-	 * Plays a little music sequence to introduce a mode for the rover (see interface {@link RoverMode}). (blocking method)
+	 * Plays a little music sequence to introduce a mode for the rover (see interface {@link RoverMode}) (blocking method).
 	 * 
 	 * Throughout its life, the rover will be in different states, called modes. To help the developers and the audience
 	 * to debug and understand what is going on without looking at the console -one can find more informations on the

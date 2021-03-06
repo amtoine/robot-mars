@@ -1,10 +1,9 @@
-package unit_tests;
+package rover;
 
+import lejos.hardware.Button;
 import modes.DiagnosticMode;
 import modes.ErrorMode;
 import modes.RoverMode;
-import rover.Beeper;
-import rover.Rover;
 
 /**
  * A wrapper to initialize all the peripherals of the rover.
@@ -30,11 +29,21 @@ public class InternalDoctor {
 		// initialize and check every peripheral. if an error occurs whilst trying to talk to a given peripheral, put it in
 		// the 'error' variable.
 		int error = 0;
-		if (rover.init_ultrasonic_sensor()) { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  1; }
-		if (rover.init_color_sensor())      { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  2; }
-		if (rover.init_pliers_motor())      { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  4; }
-		if (rover.init_right_motor())       { Beeper.beep(); } else { Beeper.twoBeeps(); error +=  8; }
-		if (rover.init_left_motor())        { Beeper.beep(); } else { Beeper.twoBeeps(); error += 16; }
+		if (rover.init_ultrasonic_sensor()) 
+				{ Beeper.beep();     System.out.println("con. us: ok"); }
+		else 	{ Beeper.twoBeeps(); System.out.println("con. us: ko (" + rover.us_port.getName() + ")"); error +=  1; }
+		if (rover.init_color_sensor()) 
+				{ Beeper.beep();     System.out.println("con. cs: ok"); }
+		else 	{ Beeper.twoBeeps(); System.out.println("con. cs: ko (" + rover.cs_port.getName() + ")"); error +=  2; }
+		if (rover.init_pliers_motor()) 
+				{ Beeper.beep();     System.out.println("con. pm: ok"); }
+		else 	{ Beeper.twoBeeps(); System.out.println("con. pm: ko (" + rover.pm_port.getName() + ")"); error +=  4; }
+		if (rover.init_right_motor()) 
+				{ Beeper.beep();     System.out.println("con. rm: ok"); }
+		else 	{ Beeper.twoBeeps(); System.out.println("con. rm: ko (" + rover.rm_port.getName() + ")"); error +=  8; }
+		if (rover.init_left_motor()) 
+				{ Beeper.beep();     System.out.println("con. lm: ok"); }
+		else 	{ Beeper.twoBeeps(); System.out.println("con. lm: ko (" + rover.lm_port.getName() + ")"); error += 16; }
 		
 		// diagnostic is now done.
 		mode.stop();
@@ -44,6 +53,7 @@ public class InternalDoctor {
 			// the rover enters the error mode...
 			mode = new ErrorMode();
 			mode.start();
+			Button.waitForAnyPress();
 			// and program halts when a button is pressed.
 			System.exit(1);
 		}

@@ -1,6 +1,5 @@
 package modes;
 
-import lejos.hardware.Button;
 import rover.Beeper;
 import rover.Blinker;
 
@@ -13,7 +12,7 @@ import rover.Blinker;
 public class WaitMode implements RoverMode {
 
 	/**
-	 * Starts the wait mode. (blocking method)
+	 * Starts the wait mode.
 	 * When the rover needs to wait for a button to be pressed, it enters the wait mode. This is the proper method to use
 	 * to trigger 'wait' sound and light effects.
 	 */
@@ -23,7 +22,6 @@ public class WaitMode implements RoverMode {
 		
 		Beeper.play(WaitMode.WAIT);
 		Blinker.blink(Blinker.ORANGE, Blinker.SLOW);
-		Button.waitForAnyPress();
 	}
 
 	/**

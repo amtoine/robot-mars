@@ -1,6 +1,5 @@
 package modes;
 
-import lejos.hardware.Button;
 import rover.Beeper;
 import rover.Blinker;
 
@@ -12,7 +11,7 @@ import rover.Blinker;
  */
 public class ErrorMode implements RoverMode {
 	/**
-	 * Starts the error mode. (blocking method)
+	 * Starts the error mode.
 	 * When the internal inspection of the rover reports any error, the rover enters the error mode and go to sleep because
 	 * the mission is compromised. This is the proper method to use to trigger 'error' sound and light effects.
 	 */
@@ -22,7 +21,6 @@ public class ErrorMode implements RoverMode {
 		
 		Beeper.play(ErrorMode.ERROR);
 		Blinker.blink(Blinker.RED, Blinker.FAST);
-		Button.waitForAnyPress();
 	}
 
 	/**
