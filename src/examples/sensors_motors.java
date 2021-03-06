@@ -41,7 +41,7 @@ public class sensors_motors {
 		System.out.println("P_useful: " + p_useful);
 		Button.waitForAnyPress();
 		
-		Motor1.resetTachoCount();
+		Motor1.resetTachoCount(); // a tachometer measures the velocity 
 		Motor2.resetTachoCount();
 		Motor1.rotateTo(0);
 		Motor2.rotateTo(0);
