@@ -3,10 +3,17 @@ package robot;
 import lejos.robotics.mapping.OccupancyGridMap;
 
 public class Map {
-	double resolution = 25;
-	double freeThreshold = resolution;
-	double occupiedThreshold = resolution;
-	OccupancyGridMap map = new OccupancyGridMap(150,250,freeThreshold,occupiedThreshold,resolution);
+	public OccupancyGridMap map;
+	
+	public Map(double res) {
+		double freeThreshold = res;
+		double occupiedThreshold = res;
+		OccupancyGridMap m = new OccupancyGridMap(150,250,freeThreshold,occupiedThreshold,res);
+		map = m;
+	}
+	
+	
+	
 	
 	//int[][2] recup_zone;
 	//for (int i=0;i<recup_zone.size();i++) {
