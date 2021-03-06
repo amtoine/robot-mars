@@ -99,6 +99,7 @@ public class sensors_motors {
 			Motor2.stop();
 			
 			sp_tc.fetchSample(touch, 0);
+			value2 = (int)touch[0];
 			LCD.clear();
 			Button.waitForAnyPress();
 		}

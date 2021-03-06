@@ -29,8 +29,8 @@ public class Deplacement {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Wheel right_w = WheeledChassis.modelWheel(Motor.A, 5.6).offset(-6.3);
-		Wheel left_w = WheeledChassis.modelWheel(Motor.B, 5.6).offset(6.3);
+		Wheel right_w = WheeledChassis.modelWheel(Motor.B, 5.6).offset(-6.3);
+		Wheel left_w = WheeledChassis.modelWheel(Motor.C, 5.6).offset(6.3);
 		Chassis chassis = new WheeledChassis(new Wheel[] {right_w, left_w}, WheeledChassis.TYPE_DIFFERENTIAL);
 		
 		MovePilot rover = new MovePilot(chassis);
@@ -74,9 +74,11 @@ public class Deplacement {
 		Motor.A.rotate(720, true);
 		
 		while (Motor.A.isMoving()) {
+
 			rover.rotate(360);
 			Button.LEDPattern(4); 
 			Delay.msDelay(50); // wait for the specified number of milliseconds 
+
 		}
 		
 		rover.stop();
