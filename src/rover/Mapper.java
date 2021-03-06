@@ -14,8 +14,17 @@ import lejos.robotics.mapping.OccupancyGridMap;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
 
+/**
+ * _____________________________________________TODO_____________________________________________
+ * @author _____________________________________________TODO_____________________________________________
+ *
+ */
 public class Mapper {
 
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * @param args _____________________________________________TODO_____________________________________________
+	 */
 	public static void main(String[] args) {
 		EV3UltrasonicSensor us = new EV3UltrasonicSensor(SensorPort.S3);
 		SampleProvider sp_us = us.getDistanceMode();

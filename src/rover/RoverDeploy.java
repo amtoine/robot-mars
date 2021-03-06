@@ -10,8 +10,19 @@ import modes.LandingMode;
 import modes.RoverMode;
 import unit_tests.InternalDoctor;
 
+/**
+ * A simple sequential main class to test the rover in its environment.
+ * 
+ * @author Antoine Stevan
+ *
+ */
 public class RoverDeploy {
 
+	/**
+	 * Main method to test the rover in its environment.
+	 * 
+	 * @param args unused java arguments for main methods.
+	 */
 	public static void main(String[] args) {
 		Rover rover = new Rover(SensorPort.S4, SensorPort.S1,
 				                MotorPort.A, MotorPort.B, MotorPort.C);

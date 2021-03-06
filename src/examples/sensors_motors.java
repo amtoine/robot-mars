@@ -11,8 +11,15 @@ import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
 
+/**
+ * Example of sensors uses for an ev3 robot.
+ */
 public class sensors_motors {
-
+	
+	/**
+	 * Shows some sensors examples for an ev3 robot.
+	 * @param args java basic arguments for main methods.
+	 */
 	public static void main(String[] args) {
 		int dist_min = 30;
 		int angle_middle = 0;

@@ -7,8 +7,15 @@ import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.navigation.MovePilot;
 
+/**
+ * Example of navigation for an ev3 robot.
+ */
 public class Navigation {
 
+	/**
+	 * Shows some navigation examples for an ev3 robot.
+	 * @param args java basic arguments for main methods.
+	 */
 	public static void main(String[] args) {
 		Wheel right_w = WheeledChassis.modelWheel(Motor.B, 4).offset(-6.3);
 		Wheel left_w = WheeledChassis.modelWheel(Motor.C, 4).offset(6.3);

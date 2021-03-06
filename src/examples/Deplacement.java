@@ -12,8 +12,17 @@ import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
 import lejos.utility.Delay;
 
+/**
+ * Example of movements for an ev3 robot.
+ */
 public class Deplacement {
 	
+	/**
+	 * Factoring method to make the code clearer
+	 * 
+	 * @param pose the current pose of the robot.
+	 * @param i LCD drawing parameter.
+	 */
 	private static void screen(Pose pose, int i) {
 		LCD.clear();
 		LCD.drawString("a xpose: " + pose.getX(), 0, i);
@@ -27,6 +36,10 @@ public class Deplacement {
 		Button.LEDPattern(0);
 	}
 
+	/**
+	 * Shows some movements examples for an ev3 robot.
+	 * @param args java basic arguments for main methods.
+	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Wheel right_w = WheeledChassis.modelWheel(Motor.B, 5.6).offset(-6.3);
@@ -37,7 +50,6 @@ public class Deplacement {
 		
 		PoseProvider odometer = chassis.getPoseProvider();
 		
-		Pose pose;
 		int i = 2;
 		
 		Sound.beepSequenceUp();

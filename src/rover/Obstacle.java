@@ -13,11 +13,26 @@ import lejos.robotics.localization.PoseProvider;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Pose;
 
+/**
+ * _____________________________________________TODO_____________________________________________
+ * @author _____________________________________________TODO_____________________________________________
+ *
+ */
 public class Obstacle {
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * @param p _____________________________________________TODO_____________________________________________
+	 * @param init_pose _____________________________________________TODO_____________________________________________
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public static boolean inMap(Point p, Pose init_pose) {
 		return p.x >= 0-init_pose.getX() && p.x <= 250-init_pose.getX() && p.y >= -75-init_pose.getY() && p.y <= 75-init_pose.getY(); //suppose initial position of rover is at center of starting zone
 	}
 
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * @param args _____________________________________________TODO_____________________________________________
+	 */
 	public static void main(String[] args) {
 		EV3UltrasonicSensor us = new EV3UltrasonicSensor(SensorPort.S4);
 		SampleProvider sp_us = us.getDistanceMode();

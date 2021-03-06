@@ -8,23 +8,62 @@ import lejos.hardware.sensor.EV3ColorSensor;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.RegulatedMotor;
 
+/**
+ * _____________________________________________TODO_____________________________________________
+ * 
+ * @author Antoine Stevan
+ * 
+ */
 public class Rover {
-	
+
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private EV3UltrasonicSensor ultrasonic_sensor;
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private Port ultrasonic_port;
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private EV3ColorSensor color_sensor;
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private Port color_port;
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private RegulatedMotor pliers_motor;
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private Port pliers_motor_port;
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private RegulatedMotor right_motor;
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private Port right_motor_port;
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private RegulatedMotor left_motor;
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	private Port left_motor_port;
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 */
 	public Rover() {
 		this.ultrasonic_sensor = null;
 		this.color_sensor       = null;
@@ -40,6 +79,15 @@ public class Rover {
 		this.left_motor_port   = MotorPort.C;
 	}
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param ultrasonic_port _____________________________________________TODO_____________________________________________
+	 * @param color_port _____________________________________________TODO_____________________________________________
+	 * @param pliers_motor_port _____________________________________________TODO_____________________________________________
+	 * @param right_motor_port _____________________________________________TODO_____________________________________________
+	 * @param left_motor_port _____________________________________________TODO_____________________________________________
+	 */
 	public Rover(Port ultrasonic_port, Port color_port,
 			     Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
 		this.ultrasonic_sensor = null;
@@ -56,6 +104,11 @@ public class Rover {
 		this.left_motor_port   = left_motor_port;
 	}
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public boolean init_ultrasonic_sensor() {
 		try {
 			this.ultrasonic_sensor = new EV3UltrasonicSensor(this.ultrasonic_port);
@@ -66,6 +119,11 @@ public class Rover {
 			return false;
 		}
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public boolean init_color_sensor() {
 		try {
 			this.color_sensor = new EV3ColorSensor(this.color_port);
@@ -76,6 +134,11 @@ public class Rover {
 			return false;
 		}
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public boolean init_pliers_motor() {
 		try {
 			this.pliers_motor = new NXTRegulatedMotor(this.pliers_motor_port);
@@ -86,6 +149,11 @@ public class Rover {
 			return false;
 		}
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public boolean init_right_motor() {
 		try {
 			this.right_motor = new NXTRegulatedMotor(this.right_motor_port);
@@ -96,6 +164,11 @@ public class Rover {
 			return false;
 		}
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public boolean init_left_motor() {
 		try {
 			this.left_motor = new NXTRegulatedMotor(this.left_motor_port);
@@ -107,34 +180,83 @@ public class Rover {
 		}
 	}
 	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param ultrasonic_sensor _____________________________________________TODO_____________________________________________
+	 */
 	public void set_ultrasonic_sensor(EV3UltrasonicSensor ultrasonic_sensor) {
 		this.ultrasonic_sensor = ultrasonic_sensor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param color_sensor _____________________________________________TODO_____________________________________________
+	 */
 	public void set_color_sensor(EV3ColorSensor color_sensor) {
 		this.color_sensor = color_sensor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param motor _____________________________________________TODO_____________________________________________
+	 */
 	public void set_right_motor(RegulatedMotor motor) {
 		this.right_motor = motor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param motor _____________________________________________TODO_____________________________________________
+	 */
 	public void set_left_motor(RegulatedMotor motor) {
 		this.left_motor = motor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @param motor _____________________________________________TODO_____________________________________________
+	 */
 	public void set_pliers_motor(RegulatedMotor motor) {
 		this.pliers_motor = motor;
 	}
-	
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public EV3UltrasonicSensor get_ultrasonic_sensor() {
 		return this.ultrasonic_sensor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public EV3ColorSensor get_color_sensor() {
 		return this.color_sensor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public RegulatedMotor get_right_motor() {
 		return this.right_motor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public RegulatedMotor get_left_motor() {
 		return this.left_motor;
 	}
+	/**
+	 * _____________________________________________TODO_____________________________________________
+	 * 
+	 * @return _____________________________________________TODO_____________________________________________
+	 */
 	public RegulatedMotor get_pliers_motor() {
 		return this.pliers_motor;
 	}
