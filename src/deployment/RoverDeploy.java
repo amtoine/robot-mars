@@ -29,7 +29,7 @@ public class RoverDeploy {
 				                  MotorPort.A, MotorPort.B, MotorPort.C);
 		rover.land();
 		rover.checkBattery();
-		rover.init_peripherals();
+		rover.connect_peripherals();
 		
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
