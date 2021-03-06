@@ -56,7 +56,7 @@ public class Rover {
 		this.pm_port = MotorPort.A;
 		this.rm_port = MotorPort.B;
 		this.lm_port = MotorPort.C;
-	} 
+	}
 	// private constructor with parameters.
 	private Rover(Port ultrasonic_port, Port color_port,
 			     Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
