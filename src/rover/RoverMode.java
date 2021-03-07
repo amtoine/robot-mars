@@ -11,7 +11,7 @@ import tools.Blinker;
  * 
  * @author Antoine Stevan
  */
-class RoverMode {
+public class RoverMode {
 	/**
 	 * Code for the landing mode.
 	 * When the rover has just landed on Mars, this is the appropriate code to be used in {@link Blinker#blink(int, int)}
