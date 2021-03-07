@@ -46,15 +46,15 @@ class Logger {
 	
 	static void print(String str) throws IOException {
 		out.write(str);
-		log.write(give_date(format) + " " + str);
 		out.flush();
+		log.write(give_date(format) + " " + str);
 		log.flush();
 	}
 	static void println(String str) {
 		try {
 			out.write(str+"\n");
-			log.write(give_date(format) + " " + str+"\n");
 			out.flush();
+			log.write(give_date(format) + " " + str+"\n");
 			log.flush();
 		} catch (IOException e) {
 			System.out.println("unable to write in log.log");

@@ -19,4 +19,7 @@ abstract class Peripheral {
 	 * @return true if the right motor is properly connected to the right port, false if any error occurs.
 	 */
 	abstract boolean connect();
+	
+	abstract Measure read();
+	abstract void write(Order order);
 }

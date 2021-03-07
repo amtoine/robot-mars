@@ -3,11 +3,10 @@ package rover;
 
 import lejos.hardware.Battery;
 import lejos.hardware.Button;
+import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
-import lejos.robotics.RegulatedMotor;
-import lejos.robotics.SampleProvider;
 import modes.DiagnosticMode;
 import modes.ErrorMode;
 import modes.ExplorationMode;
@@ -28,10 +27,10 @@ import modes.WaitMode;
  */
 public class Rover {
 	UltraEyes us;
-	ColorEye cs;
-	Engine pm;
-	Engine rm;
-	Engine lm;
+	ColorEye  cs;
+	Engine    pm;
+	Engine    rm;
+	Engine    lm;
 	
 	// private default constructor.
 	private Rover() {
@@ -82,7 +81,10 @@ public class Rover {
 		return new Rover(ultrasonic_port, color_port, pliers_motor_port, right_motor_port, left_motor_port);
 	}
 	
-
+	/**
+	 * Checks the battery of the rover.
+	 * If the batteries are too low, the rover will enter the error mode because the mission is compromised.
+	 */
 	public void checkBattery() {
 		float bc = Battery.getBatteryCurrent();
 		float mc = Battery.getMotorCurrent();
@@ -208,105 +210,50 @@ public class Rover {
 	//######################################################################################################################
 	//### Setters and Getters ##############################################################################################
 	//######################################################################################################################
-//	/**
-//	 * Setter for the ultrasonic sensor.
-//	 * 
-//	 * @param ultrasonic_sensor the new ultrasonic sensor.
-//	 */
-//	public void set_ultrasonic_sensor(EV3UltrasonicSensor ultrasonic_sensor) {
-//		this.ultrasonic_sensor = ultrasonic_sensor;
-//	}
-//	/**
-//	 * Setter for the color sensor.
-//	 * 
-//	 * @param color_sensor the new color sensor.
-//	 */
-//	public void set_color_sensor(EV3ColorSensor color_sensor) {
-//		this.color_sensor = color_sensor;
-//	}
-//	/**
-//	 * Setter for the pliers motor.
-//	 * 
-//	 * @param motor the new pliers motor.
-//	 */
-//	public void set_right_motor(RegulatedMotor motor) {
-//		this.right_motor = motor;
-//	}
-//	/**
-//	 * Setter for the right motor.
-//	 * 
-//	 * @param motor the new right motor.
-//	 */
-//	public void set_left_motor(RegulatedMotor motor) {
-//		this.left_motor = motor;
-//	}
-//	/**
-//	 * Setter for the left motor.
-//	 * 
-//	 * @param motor the new left motor.
-//	 */
-//	public void set_pliers_motor(RegulatedMotor motor) {
-//		this.pliers_motor = motor;
-//	}
-	
-//	/**
-//	 * Getter for the ultrasonic sensor.
-//	 * 
-//	 * @return the current ultrasonic sensor.
-//	 */
-//	public EV3UltrasonicSensor get_ultrasonic_sensor() {
-//		return this.ultrasonic_sensor;
-//	}
-//	/**
-//	 * Getter for the color sensor.
-//	 * 
-//	 * @return the current color sensor.
-//	 */
-//	public EV3ColorSensor get_color_sensor() {
-//		return this.color_sensor;
-//	}
-	/**
-	 * Getter for the left motor.
-	 * 
-	 * @return the current left motor.
-	 */
-	public RegulatedMotor get_pliers_motor() {
-		return this.pm.device;
-//		return this.pliers_motor;
-	}
-	/**
-	 * Getter for the pliers motor.
-	 * 
-	 * @return the current pliers motor.
-	 */
-	public RegulatedMotor get_right_motor() {
-		return this.rm.device;
-//		return this.right_motor;
-	}
-	/**
-	 * Getter for the right motor.
-	 * 
-	 * @return the current right motor.
-	 */
-	public RegulatedMotor get_left_motor() {
-		return this.lm.device;
-//		return this.left_motor;
-	}
 	
 	//######################################################################################################################
 	//### Take Measures ####################################################################################################
 	//######################################################################################################################
 	public float take_us_measure() {
-		this.us.device.enable();
-		SampleProvider sp_us = this.us.device.getDistanceMode();
-		float[] dist = new float[sp_us.sampleSize()];
-		sp_us.fetchSample(dist, 0);
-		return dist[0];
+		return this.us.read().value;
 	}
 	
-	public int take_cs_measure() {
-		System.out.println("red: " + this.cs.device.getRedMode().getName());
-		System.out.println("rgb: " + this.cs.device.getRGBMode().getName());
-		return this.cs.device.getColorID();
+	public float take_cs_measure() {
+		return this.cs.read().value;
+	}
+	
+	//###################################################################################################################
+	//### sensors tests #################################################################################################
+	//###################################################################################################################
+	public void test_ultrasonic_sensor() {
+		float dist;
+		while (Button.readButtons() != Button.ID_ENTER) {
+			dist = this.take_us_measure();
+			System.out.println(dist);
+		}		
+	}
+	public void test_color_sensor() {
+		float id = -1;
+		while (Button.readButtons() != Button.ID_ENTER) {
+			LCD.clear();
+			id = this.take_cs_measure();
+			System.out.println("id: " + id);
+		}		
+	}
+	
+	//###################################################################################################################
+	//### motors tests ##################################################################################################
+	//###################################################################################################################
+	public void test_motors() {
+		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0); Button.waitForAnyPress(); Beeper.beep();
+		
+		this.pm.write(new Order(90, 360));
+		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
+
+		this.rm.write(new Order(90, 360));
+		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
+		
+		this.lm.write(new Order(90, 360));
+		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();		
 	}
 }

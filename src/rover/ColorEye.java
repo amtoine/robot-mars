@@ -20,4 +20,14 @@ class ColorEye extends Peripheral {
 		}
 	}
 
+	Measure read() {
+		System.out.println("red: " + this.device.getRedMode().getName());
+		System.out.println("rgb: " + this.device.getRGBMode().getName());
+		return new Measure(this.device.getColorID());
+	}
+
+	void write(Order order) {
+		
+	}
+
 }

@@ -21,4 +21,13 @@ class Engine extends Peripheral {
 		}
 	}
 
+	Measure read() {
+		return null;
+	}
+
+	void write(Order order) {
+		this.device.setSpeed(order.speed);
+		this.device.rotate(order.angle);
+	}
+
 }
