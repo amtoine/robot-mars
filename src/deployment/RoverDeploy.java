@@ -26,14 +26,16 @@ public class RoverDeploy {
 		rover.land();
 		rover.checkBattery();
 		rover.connect_peripherals();
+		rover.wake_up_navigator();
 		
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
 		
-		rover.test_ultrasonic_sensor();
-		rover.test_color_sensor();
-		rover.test_motors();
+//		rover.test_ultrasonic_sensor();
+//		rover.test_color_sensor();
+//		rover.test_motors();
+		rover.test_navigator();
 	}
 
 }

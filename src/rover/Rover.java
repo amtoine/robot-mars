@@ -7,14 +7,15 @@ import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
-import modes.DiagnosticMode;
-import modes.ErrorMode;
-import modes.ExplorationMode;
-import modes.HarvestMode;
-import modes.LandingMode;
-import modes.RoverMode;
-import modes.SleepMode;
-import modes.WaitMode;
+import lejos.robotics.chassis.Chassis;
+import lejos.robotics.chassis.Wheel;
+import lejos.robotics.chassis.WheeledChassis;
+import lejos.robotics.navigation.MovePilot;
+import lejos.robotics.navigation.Navigator;
+import lejos.robotics.navigation.Pose;
+import lejos.robotics.navigation.Waypoint;
+import tools.Beeper;
+import tools.Blinker;
 
 /**
  * To carry out a mission, the most common way is to build and use a rover.
@@ -26,26 +27,38 @@ import modes.WaitMode;
  * 
  */
 public class Rover {
+	Logger logger;
+	RoverMode mode;
+	
 	UltraEyes us;
 	ColorEye  cs;
-	Engine    pm;
+	Grabber   pliers;
 	Engine    rm;
 	Engine    lm;
 	
+	Navigator nav;
+	
+	static int WHEEL_DIAMETER = 40;
+	static int HALF_WIDTH = 63;
+	
 	// private default constructor.
 	private Rover() {
+		this.logger = new Logger();
+		
 		this.us = new UltraEyes(SensorPort.S4);
 		this.cs = new ColorEye(SensorPort.S1);
-		this.pm = new Engine(MotorPort.A);
+		this.pliers = new Grabber(MotorPort.A);
 		this.rm = new Engine(MotorPort.B);
 		this.lm = new Engine(MotorPort.C);
 	}
 	// private constructor with parameters.
 	private Rover(Port ultrasonic_port, Port color_port,
 			     Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
+		this.logger = new Logger();
+		
 		this.us = new UltraEyes(ultrasonic_port);
 		this.cs = new ColorEye(color_port);
-		this.pm = new Engine(pliers_motor_port);
+		this.pliers = new Grabber(pliers_motor_port);
 		this.rm = new Engine(right_motor_port);
 		this.lm = new Engine(left_motor_port);
 	}
@@ -58,8 +71,9 @@ public class Rover {
 	 * @return a newly built default rover.
 	 */
 	public static Rover build() {
-		Logger.open("log.log");
-		return new Rover();
+		Rover rover = new Rover();
+		rover.logger.open("log.log");
+		return rover;
 	}
 	
 	/**
@@ -77,8 +91,9 @@ public class Rover {
 	 */
 	public static Rover build(Port ultrasonic_port, Port color_port,
 			     			  Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
-		Logger.open("log.log");
-		return new Rover(ultrasonic_port, color_port, pliers_motor_port, right_motor_port, left_motor_port);
+		Rover rover = new Rover(ultrasonic_port, color_port, pliers_motor_port, right_motor_port, left_motor_port);
+		rover.logger.open("log.log");
+		return rover;
 	}
 	
 	/**
@@ -89,7 +104,30 @@ public class Rover {
 		float bc = Battery.getBatteryCurrent();
 		float mc = Battery.getMotorCurrent();
 		float bv = Battery.getVoltage();
-		Logger.println("bc: "+bc+",mc: "+mc+",bv: "+bv);
+		this.logger.println("bc: "+bc+",mc: "+mc+",bv: "+bv);
+		
+		int bat = (int) (bv*4/9000);
+		switch (bat) {
+			case 3:
+				this.logger.println("battery is full");
+				Blinker.blink(Blinker.GREEN, Blinker.SLOW);
+				break;
+			case 2:
+				this.logger.println("battery is ok");
+				Blinker.blink(Blinker.ORANGE, Blinker.SLOW);
+				break;
+			case 1:
+				this.logger.println("battery is low");
+				Blinker.blink(Blinker.ORANGE, Blinker.FAST);
+				break;
+			case 0:
+				this.logger.println("battery is empty");
+				Blinker.blink(Blinker.RED, Blinker.FAST);
+				break;
+		}
+		
+		Button.waitForAnyPress(10000);
+		if (bat == 0) { this.error(); } 
 	}
 	
 	//######################################################################################################################
@@ -104,42 +142,45 @@ public class Rover {
 	 */
 	public void connect_peripherals() {
 		// first the rover enters the diagnostic mode.
-		RoverMode mode = new DiagnosticMode();
-		mode.start();
+		this.mode.enter_diagnostic_mode();
 		
 		// initialize and check every peripheral. if an error occurs whilst trying to talk to a given peripheral, put it in
 		// the 'error' variable.
 		int error = 0;
 		if (this.us.connect()) 
-				{ Beeper.beep();     Logger.println("con. us: ok"); }
-		else 	{ Beeper.twoBeeps(); Logger.println("con. us: ko (" + this.us.port.getName() + ")"); error +=  1; }
+				{ Beeper.beep();     this.logger.println("con. us: ok"); }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.us.port.getName() + ")");
+		          error +=  1; }
 		if (this.cs.connect()) 
-				{ Beeper.beep();     Logger.println("con. cs: ok"); }
-		else 	{ Beeper.twoBeeps(); Logger.println("con. cs: ko (" + this.cs.port.getName() + ")"); error +=  2; }
-		if (this.pm.connect()) 
-				{ Beeper.beep();     Logger.println("con. pm: ok"); }
-		else 	{ Beeper.twoBeeps(); Logger.println("con. pm: ko (" + this.pm.port.getName() + ")"); error +=  4; }
+				{ Beeper.beep();     this.logger.println("con. cs: ok"); }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.cs.port.getName() + ")");
+		          error +=  2; }
+		if (this.pliers.connect()) 
+				{ Beeper.beep();     this.logger.println("con. pm: ok"); }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. pm: ko (" + this.pliers.motor.port.getName() + ")");
+		          error +=  4; }
 		if (this.rm.connect()) 
-				{ Beeper.beep();     Logger.println("con. rm: ok"); }
-		else 	{ Beeper.twoBeeps(); Logger.println("con. rm: ko (" + this.rm.port.getName() + ")"); error +=  8; }
+				{ Beeper.beep();     this.logger.println("con. rm: ok"); }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. rm: ko (" + this.rm.port.getName() + ")");
+		          error +=  8; }
 		if (this.lm.connect()) 
-				{ Beeper.beep();     Logger.println("con. lm: ok"); }
-		else 	{ Beeper.twoBeeps(); Logger.println("con. lm: ko (" + this.lm.port.getName() + ")"); error += 16; }
+				{ Beeper.beep();     this.logger.println("con. lm: ok"); }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. lm: ko (" + this.lm.port.getName() + ")");
+	              error += 16; }
 		
 		// diagnostic is now done.
-		mode.stop();
+		this.mode.stop();
 		
 		// if an error occurred, 'error' is non zero.
-		if (error != 0) {
-			// the rover enters the error mode...
-			mode = new ErrorMode();
-			Logger.println("starting error mode");
-			mode.start();
-			Button.waitForAnyPress();
-			Logger.println("ending error mode -> exit program");
-			// and program halts when a button is pressed.
-			System.exit(1);
-		}	
+		if (error != 0) { this.error(); }	
+	}
+	
+	public void wake_up_navigator() {
+		Wheel left  = WheeledChassis.modelWheel(this.rm.device, WHEEL_DIAMETER).offset(-HALF_WIDTH);
+		Wheel right = WheeledChassis.modelWheel(this.lm.device, WHEEL_DIAMETER).offset( HALF_WIDTH);
+		Chassis chassis = new WheeledChassis(new Wheel[] {right, left}, WheeledChassis.TYPE_DIFFERENTIAL);
+		
+		this.nav = new Navigator(new MovePilot(chassis), chassis.getPoseProvider());
 	}
 	
 	//######################################################################################################################
@@ -150,61 +191,70 @@ public class Rover {
 	 *  _____________________________________________TODO_____________________________________________ (blocking method).
 	 */
 	public void land() {
-		LandingMode mode = new LandingMode();
-		Logger.println("starting landing mode");
-		mode.start();
+		this.logger.println("starting landing mode");
+		this.mode.enter_landind_mode();
 		System.out.println("  -> press any key to end landing");
 		Button.waitForAnyPress();
-		Logger.println("ending landing mode");
-		mode.stop();		
+		this.logger.println("ending landing mode");
+		this.mode.stop();		
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
 	public void explore() {
-		ExplorationMode mode = new ExplorationMode();
-		Logger.println("starting exploration mode");
-		mode.start();
+		this.logger.println("starting exploration mode");
+		this.mode.enter_exploration_mode();
 		System.out.println("  -> press any key to end exploration");
 		Button.waitForAnyPress();
-		Logger.println("ending exploration mode");
-		mode.stop();
+		this.logger.println("ending exploration mode");
+		this.mode.stop();
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
 	public void harvest() {
-		HarvestMode mode = new HarvestMode();
-		Logger.println("starting harvest mode");
-		mode.start();
+		this.logger.println("starting harvest mode");
+		this.mode.enter_harvest_mode();
 		System.out.println("  -> press any key to end harvest");
 		Button.waitForAnyPress();
-		Logger.println("ending harvest mode");
-		mode.stop();		
+		this.logger.println("ending harvest mode");
+		this.mode.stop();		
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________ (blocking method).
 	 */
 	public void await() {
-		WaitMode mode = new WaitMode();
-		Logger.println("starting wait mode");
-		mode.start();
+		this.logger.println("starting wait mode");
+		this.mode.enter_wait_mode();
 		System.out.println("  -> press any key to end wait");
 		Button.waitForAnyPress();
-		Logger.println("ending wait mode");
-		mode.stop();		
+		this.logger.println("ending wait mode");
+		this.mode.stop();		
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________ (blocking method).
 	 */
 	public void sleep() {
-		SleepMode mode = new SleepMode();
-		Logger.println("starting sleep mode");
-		mode.start();
+		this.logger.println("starting sleep mode");
+		this.mode.enter_sleep_mode();
 		System.out.println("  -> press any key to end sleep");
 		Button.waitForAnyPress();
-		Logger.println("ending sleep mode");
-		mode.stop();		
+		this.logger.println("ending sleep mode");
+		this.mode.stop();		
+	}
+	/**
+	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 */
+	public void error() {
+		this.logger.println("starting error mode");
+		// the rover enters the error mode...
+		this.mode.enter_error_mode();
+		System.out.println("  -> press any key to exit");
+		Button.waitForAnyPress();
+		this.logger.println("ending error mode -> exit program");
+		this.mode.stop();
+		// and program halts when a button is pressed.
+		System.exit(1);
 	}
 
 	//######################################################################################################################
@@ -214,46 +264,87 @@ public class Rover {
 	//######################################################################################################################
 	//### Take Measures ####################################################################################################
 	//######################################################################################################################
-	public float take_us_measure() {
-		return this.us.read().value;
-	}
-	
-	public float take_cs_measure() {
-		return this.cs.read().value;
-	}
 	
 	//###################################################################################################################
 	//### sensors tests #################################################################################################
 	//###################################################################################################################
 	public void test_ultrasonic_sensor() {
+		this.logger.println("starting tests on ultra...");
 		float dist;
 		while (Button.readButtons() != Button.ID_ENTER) {
-			dist = this.take_us_measure();
+			dist = this.us.read().value;
 			System.out.println(dist);
-		}		
+		}
+		this.logger.println("ultra done");
 	}
 	public void test_color_sensor() {
+		this.logger.println("starting tests on color...");
 		float id = -1;
 		while (Button.readButtons() != Button.ID_ENTER) {
 			LCD.clear();
-			id = this.take_cs_measure();
+			id = this.cs.read().value;
 			System.out.println("id: " + id);
-		}		
+		}
+		this.logger.println("color done");	
 	}
 	
 	//###################################################################################################################
 	//### motors tests ##################################################################################################
 	//###################################################################################################################
 	public void test_motors() {
+		this.logger.println("starting tests on motors...");
+		// reseting the tacho counts.
+		this.pliers.motor.device.resetTachoCount();
+		this.rm.device.resetTachoCount();
+		this.lm.device.resetTachoCount();
+		
 		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0); Button.waitForAnyPress(); Beeper.beep();
 		
-		this.pm.write(new Order(90, 360));
+		// pliers
+		this.logger.println("closing pliers..."); this.logger.println(this.pliers.getTachoCount());
+		this.pliers.grab();
+		while (this.pliers.isMoving()) {
+			this.logger.println(this.pliers.getTachoCount() +
+					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("releasing pliers..."); this.logger.println(this.pliers.getTachoCount());
+		this.pliers.release();
+		while (this.pliers.isMoving()) {
+			this.logger.println(this.pliers.getTachoCount() +
+					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
 		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
 
-		this.rm.write(new Order(90, 360));
-		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
+		// right track
+		this.logger.println("rotating right..."); this.logger.println(this.rm.device.getTachoCount());
+		this.rm.write(new Order(90, 360));  
+		while (this.rm.device.isMoving()) {
+			this.logger.println(this.rm.device.getTachoCount() + "(" + this.rm.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
+		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);  Button.waitForAnyPress(); Beeper.beep();
+
+		// left track
+		this.logger.println("rotating left..."); this.logger.println(this.lm.device.getTachoCount());
+		this.lm.write(new Order(90, 360));  
+		while (this.lm.device.isMoving()) {
+			this.logger.println(this.lm.device.getTachoCount() + "(" + this.lm.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
+		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();
+
+		// end of tests
+		this.logger.println("motors done");
+	}
+	
+	//###################################################################################################################
+	//### navigator tests ###############################################################################################
+	//###################################################################################################################
+	public void test_navigator() {
+		Pose pose = this.nav.getPoseProvider().getPose();
+		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading());
 		
-		this.lm.write(new Order(90, 360));
-		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();		
+		this.nav.goTo(new Waypoint(pose.pointAt(10, pose.getHeading()+90)));
 	}
 }

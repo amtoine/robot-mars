@@ -1,8 +1,7 @@
-package rover;
+package tools;
 
 import lejos.hardware.Sound;
 import lejos.utility.Delay;
-import modes.RoverMode;
 
 /**
  * The Beeper static class is designed to help developers to use the leJOS' Sound class more easily.  

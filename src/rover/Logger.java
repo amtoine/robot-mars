@@ -13,72 +13,76 @@ class Logger {
 	        DateFormat.SHORT,
 	        DateFormat.MEDIUM);
 
-    static BufferedWriter out;
-    static BufferedWriter log;
+    BufferedWriter out;
+    BufferedWriter log;
 	
 	static String give_date(DateFormat format) {
 		return "["+format.format(new Date()).replaceAll(" PM", "").replaceAll(", ", " ")+"]";
 	}
 	
-	static void open(String log_filename){
+	void open(String log_filename){
 		out = new BufferedWriter(new PrintWriter(System.out));
 		try {
 			log = new BufferedWriter(new PrintWriter(log_filename));
 		} catch (FileNotFoundException e) {
-			System.out.println("unable to open log.log");
+			System.out.println("unable to open " + log_filename);
 		}
 	}
 	
-	static void write(String str) throws IOException {
+	void write(String str) throws IOException {
 		out.write(str);
 		log.write(give_date(format) + " " + str);
 	}
 	
-	static void write(String str, boolean newline) throws IOException {
+	void write(String str, boolean newline) throws IOException {
 		if (newline) 	{ out.write(str+"\n"); log.write(give_date(format) + " " + str+"\n"); }
 		else 			{ out.write(str);      log.write(give_date(format) + " " + str); }
 	}
 	
-	static void writeln(String str) throws IOException {
+	void writeln(String str) throws IOException {
 		out.write(str+"\n");
 		log.write(give_date(format) + " " + str+"\n");
 	}
 	
-	static void print(String str) throws IOException {
+	void print(String str) throws IOException {
 		out.write(str);
 		out.flush();
 		log.write(give_date(format) + " " + str);
 		log.flush();
 	}
-	static void println(String str) {
+	void println(String str) {
 		try {
-			out.write(str+"\n");
-			out.flush();
-			log.write(give_date(format) + " " + str+"\n");
-			log.flush();
-		} catch (IOException e) {
-			System.out.println("unable to write in log.log");
-		}
+			out.write(str+"\n"); out.flush();
+			log.write(give_date(format) + " " + str+"\n"); log.flush();
+		} catch (IOException e) { System.out.println("unable to write in log.log"); }
 	}
 	
-	static void flush() throws IOException {
+	void println(int str) {
+		try {
+			out.write(str+"\n"); out.flush();
+			log.write(give_date(format) + " " + str+"\n"); log.flush();
+		} catch (IOException e) { System.out.println("unable to write in log.log"); }
+	}
+	
+	void flush() throws IOException {
 		out.flush();
 		log.flush();
 	}
 	
-	static void close() throws IOException {
+	void close() throws IOException {
 		out.close();
 		log.close();
 	}
 
 	public static void main(String[] args) throws IOException {
-		open("log.log");
+		Logger logger = new Logger();
+		logger.open("log.log");
 		for (int i = 0; i < 20; i++) {
-			println("Hello World!");
+			logger.println("Hello World!");
 			try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 		}
-		write("done");
-		close();
+		logger.write("done");
+		logger.close();
 		
 	}
 
