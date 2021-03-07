@@ -25,7 +25,7 @@ public class Rover {
 	
 	UltraEyes us;
 	ColorEye  cs;
-	Engine    pm;
+	Grabber   pliers;
 	Engine    rm;
 	Engine    lm;
 	
@@ -35,7 +35,7 @@ public class Rover {
 		
 		this.us = new UltraEyes(SensorPort.S4);
 		this.cs = new ColorEye(SensorPort.S1);
-		this.pm = new Engine(MotorPort.A);
+		this.pliers = new Grabber(MotorPort.A);
 		this.rm = new Engine(MotorPort.B);
 		this.lm = new Engine(MotorPort.C);
 	}
@@ -46,7 +46,7 @@ public class Rover {
 		
 		this.us = new UltraEyes(ultrasonic_port);
 		this.cs = new ColorEye(color_port);
-		this.pm = new Engine(pliers_motor_port);
+		this.pliers = new Grabber(pliers_motor_port);
 		this.rm = new Engine(right_motor_port);
 		this.lm = new Engine(left_motor_port);
 	}
@@ -93,6 +93,29 @@ public class Rover {
 		float mc = Battery.getMotorCurrent();
 		float bv = Battery.getVoltage();
 		this.logger.println("bc: "+bc+",mc: "+mc+",bv: "+bv);
+		
+		int bat = (int) (bv*4/9000);
+		switch (bat) {
+			case 3:
+				this.logger.println("battery is full");
+				Blinker.blink(Blinker.GREEN, Blinker.SLOW);
+				break;
+			case 2:
+				this.logger.println("battery is ok");
+				Blinker.blink(Blinker.ORANGE, Blinker.SLOW);
+				break;
+			case 1:
+				this.logger.println("battery is low");
+				Blinker.blink(Blinker.ORANGE, Blinker.FAST);
+				break;
+			case 0:
+				this.logger.println("battery is empty");
+				Blinker.blink(Blinker.RED, Blinker.FAST);
+				break;
+		}
+		
+		Button.waitForAnyPress(10000);
+		if (bat == 0) { this.error(); } 
 	}
 	
 	//######################################################################################################################
@@ -114,34 +137,30 @@ public class Rover {
 		int error = 0;
 		if (this.us.connect()) 
 				{ Beeper.beep();     this.logger.println("con. us: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.us.port.getName() + ")"); error +=  1; }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.us.port.getName() + ")");
+		          error +=  1; }
 		if (this.cs.connect()) 
 				{ Beeper.beep();     this.logger.println("con. cs: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.cs.port.getName() + ")"); error +=  2; }
-		if (this.pm.connect()) 
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.cs.port.getName() + ")");
+		          error +=  2; }
+		if (this.pliers.connect()) 
 				{ Beeper.beep();     this.logger.println("con. pm: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. pm: ko (" + this.pm.port.getName() + ")"); error +=  4; }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. pm: ko (" + this.pliers.motor.port.getName() + ")");
+		          error +=  4; }
 		if (this.rm.connect()) 
 				{ Beeper.beep();     this.logger.println("con. rm: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. rm: ko (" + this.rm.port.getName() + ")"); error +=  8; }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. rm: ko (" + this.rm.port.getName() + ")");
+		          error +=  8; }
 		if (this.lm.connect()) 
 				{ Beeper.beep();     this.logger.println("con. lm: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. lm: ko (" + this.lm.port.getName() + ")"); error += 16; }
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. lm: ko (" + this.lm.port.getName() + ")");
+	              error += 16; }
 		
 		// diagnostic is now done.
 		this.mode.stop();
 		
 		// if an error occurred, 'error' is non zero.
-		if (error != 0) {
-			// the rover enters the error mode...
-			this.mode.enter_error_mode();
-			this.logger.println("starting error mode");
-			Button.waitForAnyPress();
-			this.logger.println("ending error mode -> exit program");
-			this.mode.stop();
-			// and program halts when a button is pressed.
-			System.exit(1);
-		}	
+		if (error != 0) { this.error(); }	
 	}
 	
 	//######################################################################################################################
@@ -203,6 +222,20 @@ public class Rover {
 		this.logger.println("ending sleep mode");
 		this.mode.stop();		
 	}
+	/**
+	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 */
+	public void error() {
+		this.logger.println("starting error mode");
+		// the rover enters the error mode...
+		this.mode.enter_error_mode();
+		System.out.println("  -> press any key to exit");
+		Button.waitForAnyPress();
+		this.logger.println("ending error mode -> exit program");
+		this.mode.stop();
+		// and program halts when a button is pressed.
+		System.exit(1);
+	}
 
 	//######################################################################################################################
 	//### Setters and Getters ##############################################################################################
@@ -240,17 +273,48 @@ public class Rover {
 	//###################################################################################################################
 	public void test_motors() {
 		this.logger.println("starting tests on motors...");
+		// reseting the tacho counts.
+		this.pliers.motor.device.resetTachoCount();
+		this.rm.device.resetTachoCount();
+		this.lm.device.resetTachoCount();
+		
 		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0); Button.waitForAnyPress(); Beeper.beep();
 		
-		this.logger.println("rotating pliers..."); this.pm.write(new Order(90, 360)); this.logger.println("done");
+		// pliers
+		this.logger.println("closing pliers..."); this.logger.println(this.pliers.getTachoCount());
+		this.pliers.grab();
+		while (this.pliers.isMoving()) {
+			this.logger.println(this.pliers.getTachoCount() +
+					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("releasing pliers..."); this.logger.println(this.pliers.getTachoCount());
+		this.pliers.release();
+		while (this.pliers.isMoving()) {
+			this.logger.println(this.pliers.getTachoCount() +
+					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
 		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
 
-		this.logger.println("rotating right...");  this.rm.write(new Order(90, 360)); this.logger.println("done");
+		// right track
+		this.logger.println("rotating right..."); this.logger.println(this.rm.device.getTachoCount());
+		this.rm.write(new Order(90, 360));  
+		while (this.rm.device.isMoving()) {
+			this.logger.println(this.rm.device.getTachoCount() + "(" + this.rm.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
 		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);  Button.waitForAnyPress(); Beeper.beep();
 
-		this.logger.println("rotating left...");   this.lm.write(new Order(90, 360)); this.logger.println("done");
+		// left track
+		this.logger.println("rotating left..."); this.logger.println(this.lm.device.getTachoCount());
+		this.lm.write(new Order(90, 360));  
+		while (this.lm.device.isMoving()) {
+			this.logger.println(this.lm.device.getTachoCount() + "(" + this.lm.device.getRotationSpeed() + ")");
+		}
+		this.logger.println("done");
 		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();
 
+		// end of tests
 		this.logger.println("motors done");
 	}
 }

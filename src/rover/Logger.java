@@ -52,13 +52,16 @@ class Logger {
 	}
 	void println(String str) {
 		try {
-			out.write(str+"\n");
-			out.flush();
-			log.write(give_date(format) + " " + str+"\n");
-			log.flush();
-		} catch (IOException e) {
-			System.out.println("unable to write in log.log");
-		}
+			out.write(str+"\n"); out.flush();
+			log.write(give_date(format) + " " + str+"\n"); log.flush();
+		} catch (IOException e) { System.out.println("unable to write in log.log"); }
+	}
+	
+	void println(int str) {
+		try {
+			out.write(str+"\n"); out.flush();
+			log.write(give_date(format) + " " + str+"\n"); log.flush();
+		} catch (IOException e) { System.out.println("unable to write in log.log"); }
 	}
 	
 	void flush() throws IOException {
