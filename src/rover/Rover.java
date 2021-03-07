@@ -7,6 +7,13 @@ import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
+import lejos.robotics.chassis.Chassis;
+import lejos.robotics.chassis.Wheel;
+import lejos.robotics.chassis.WheeledChassis;
+import lejos.robotics.navigation.MovePilot;
+import lejos.robotics.navigation.Navigator;
+import lejos.robotics.navigation.Pose;
+import lejos.robotics.navigation.Waypoint;
 import tools.Beeper;
 import tools.Blinker;
 
@@ -28,6 +35,11 @@ public class Rover {
 	Grabber   pliers;
 	Engine    rm;
 	Engine    lm;
+	
+	Navigator nav;
+	
+	static int WHEEL_DIAMETER = 40;
+	static int HALF_WIDTH = 63;
 	
 	// private default constructor.
 	private Rover() {
@@ -161,6 +173,14 @@ public class Rover {
 		
 		// if an error occurred, 'error' is non zero.
 		if (error != 0) { this.error(); }	
+	}
+	
+	public void wake_up_navigator() {
+		Wheel left  = WheeledChassis.modelWheel(this.rm.device, WHEEL_DIAMETER).offset(-HALF_WIDTH);
+		Wheel right = WheeledChassis.modelWheel(this.lm.device, WHEEL_DIAMETER).offset( HALF_WIDTH);
+		Chassis chassis = new WheeledChassis(new Wheel[] {right, left}, WheeledChassis.TYPE_DIFFERENTIAL);
+		
+		this.nav = new Navigator(new MovePilot(chassis), chassis.getPoseProvider());
 	}
 	
 	//######################################################################################################################
@@ -316,5 +336,15 @@ public class Rover {
 
 		// end of tests
 		this.logger.println("motors done");
+	}
+	
+	//###################################################################################################################
+	//### navigator tests ###############################################################################################
+	//###################################################################################################################
+	public void test_navigator() {
+		Pose pose = this.nav.getPoseProvider().getPose();
+		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading());
+		
+		this.nav.goTo(new Waypoint(pose.pointAt(10, pose.getHeading()+90)));
 	}
 }
