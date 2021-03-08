@@ -7,6 +7,7 @@ import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.geometry.Point;
 import lejos.robotics.localization.PoseProvider;
 import lejos.robotics.navigation.MovePilot;
+import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
 
 /**
@@ -19,71 +20,90 @@ public class SampleSensor {
 	static final MapZone recup_zone = new RecupZone();
 	int precision;
 	UltraEyes us;
-	Chassis chassis;
-	MovePilot pilot;
+	Navigator nav;
+	PoseProvider odometer;
 
-	public SampleSensor(int precision,UltraEyes us,MovePilot pilot,Chassis chassis) {
+	public SampleSensor(int precision,UltraEyes us,PoseProvider odometer, Navigator nav) {
 		this.precision = precision;
 		this.us = us;
-		this.pilot = pilot;
-		this.chassis = chassis;
+		this.nav = nav;
+		this.odometer = odometer;
 	}
 	
 	/**
 	 * Searches for a sample by doing the specified rotation and stops when detects a sample 
 	 * @param rotation the rotation to do to scan the area, in degrees
 	 */
-	public Point searchSamples(double rotation) {		
-		pilot.setLinearSpeed(20);
-		pilot.setAngularSpeed(40);
-		
-		PoseProvider odometer = chassis.getPoseProvider();
-		Pose rover_pose;
+	public Point[] scan(double rotation,boolean relative) {	//TODO	
+		Pose rover_pose = odometer.getPose();
 				
-		Point sample_pose = new Point(-50,0);
-		Point detected_pose = new Point(-50,0);
+		Point[] sample_pose = {new Point(-1000,0),new Point(-1000,0)};
+		Point detected_pose = new Point(-1000,0);
 		Measure dist = us.read();
 		double rotated = 0;
-		boolean sample_detected = false;
+		int i = 0;
 
-		while(!sample_detected && rotated<rotation) {
-			pilot.rotate(precision);
+		while(rotated<rotation) {
+			nav.rotateTo(2+rover_pose.getHeading());
 			rotation = rotation + precision;
 			rover_pose = odometer.getPose();
 			dist = us.read();
 			
 			detected_pose = rover_pose.pointAt(dist.value,rover_pose.getHeading());
-			detected_pose.x = (sample_pose.x+rover_pose.getX());
-			detected_pose.y = (sample_pose.y+rover_pose.getY());
 			
 			if(map.inside(detected_pose) && !recup_zone.inside(detected_pose)) {
-				sample_detected = true;
-				sample_pose = detected_pose;
+				if(relative) {
+					detected_pose.x = (detected_pose.x-rover_pose.getX());
+					detected_pose.y = (detected_pose.y-rover_pose.getY());
+					sample_pose[i] = detected_pose;
+				} else {
+					sample_pose[i] = detected_pose;
+				}
+				i = 1;
 			}
 		}
-
 		return sample_pose;
-
 	}
+	
+//	public Point searchSample() {
+//		pilot.setLinearSpeed(20);
+//		pilot.setAngularSpeed(40);
+//		
+//		pilot.rotate(180);
+//		Point sp_pose = scan(360);
+//		if(map.inside(sp_pose)) {
+//			return sp_pose;
+//		} else {
+//			PoseProvider odometer = chassis.getPoseProvider();
+//			while(Math.abs(odometer.getPose().getHeading())>2) {
+//				pilot.rotate(2);
+//			}
+//			pilot.forward();
+//			pilot.travel(200);
+//			pilot.rotate(180);
+//			return scan(360);
+//			
+//		}
+//		
+//	}
 	
 	public static void main(String[] args) {
 		Rover rover = Rover.build();
-		Wheel right_w = WheeledChassis.modelWheel(rover.rm.device, 4).offset(6.3);
-		Wheel left_w = WheeledChassis.modelWheel(rover.lm.device, 4).offset(-6.3);
-		Chassis chassis = new WheeledChassis(new Wheel[] {right_w, left_w}, WheeledChassis.TYPE_DIFFERENTIAL);
+//		Wheel right_w = WheeledChassis.modelWheel(rover.rm.device, 4).offset(6.3);
+//		Wheel left_w = WheeledChassis.modelWheel(rover.lm.device, 4).offset(-6.3);
+//		Chassis chassis = new WheeledChassis(new Wheel[] {right_w, left_w}, WheeledChassis.TYPE_DIFFERENTIAL);
+//		
+//		MovePilot pilot = new MovePilot(chassis);
 		
-		MovePilot pilot = new MovePilot(chassis);
+		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav); //to be integrated in rover class as attribute?
+		Point[] sp_pose = sp_sensor.scan(360,false);
 		
-		SampleSensor sp_sensor = new SampleSensor(2,rover.us,pilot,chassis); //to be integrated in rover class as attribute?
-		Point sp_pose = sp_sensor.searchSamples(360);
-		
-		if (map.inside(sp_pose)) {
+		if (sp_pose[0].x==-50) {
 			System.out.println("sample detected");
-			System.out.println("x,y: " + sp_pose.x + "," + sp_pose.y);
+			System.out.println("x,y: " + sp_pose[0].x + "," + sp_pose[0].y);
 		} else {
 			System.out.println("no sample detected");
 		}
-		
 		Button.waitForAnyPress();
 	}
 

@@ -10,6 +10,7 @@ import lejos.hardware.port.SensorPort;
 import lejos.robotics.chassis.Chassis;
 import lejos.robotics.chassis.Wheel;
 import lejos.robotics.chassis.WheeledChassis;
+import lejos.robotics.geometry.Point;
 import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
@@ -37,6 +38,8 @@ public class Rover {
 	Engine    lm;
 	
 	Navigator nav;
+	
+	SampleSensor sp_sensor;
 	
 	static int WHEEL_DIAMETER = 40;
 	static int HALF_WIDTH = 63;
@@ -183,6 +186,10 @@ public class Rover {
 		this.nav = new Navigator(new MovePilot(chassis), chassis.getPoseProvider());
 	}
 	
+	public void wake_up_sample_sensor() {
+		this.sp_sensor = new SampleSensor(2,us,nav.getPoseProvider(),nav);
+	}
+	
 	//######################################################################################################################
 	//### Rover Modes ######################################################################################################
 	//######################################################################################################################
@@ -201,13 +208,29 @@ public class Rover {
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public void explore() {
+	public Point[] explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
-		System.out.println("  -> press any key to end exploration");
-		Button.waitForAnyPress();
+		
+		nav.rotateTo(-90);
+		Point[] sp_poses = sp_sensor.scan(180, false);
+		if(sp_poses[0].x==-1000) {
+			this.logger.println("x,y: " + sp_poses[0].x + "," + sp_poses[0].y);
+			this.logger.println("ending exploration mode");
+			this.mode.stop();
+			return sp_poses;
+		}
+		nav.rotateTo(0);
+		nav.goTo(200, 60);
+		nav.rotateTo(90);
+		sp_poses = sp_sensor.scan(180, false);
+		this.logger.println("x,y: " + sp_poses[0].x + "," + sp_poses[0].y);
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
+		return sp_poses;
+		
+		//System.out.println("  -> press any key to end exploration");
+		//Button.waitForAnyPress();
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
@@ -215,8 +238,9 @@ public class Rover {
 	public void harvest() {
 		this.logger.println("starting harvest mode");
 		this.mode.enter_harvest_mode();
-		System.out.println("  -> press any key to end harvest");
-		Button.waitForAnyPress();
+		
+		//System.out.println("  -> press any key to end harvest");
+		//Button.waitForAnyPress();
 		this.logger.println("ending harvest mode");
 		this.mode.stop();		
 	}

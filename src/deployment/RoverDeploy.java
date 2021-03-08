@@ -27,6 +27,7 @@ public class RoverDeploy {
 		rover.checkBattery();
 		rover.connect_peripherals();
 		rover.wake_up_navigator();
+		rover.wake_up_sample_sensor();
 		
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
