@@ -30,6 +30,7 @@ class ColorEye extends Peripheral {
 	boolean connect() {
 		try {
 			this.device = new EV3ColorSensor(this.port);
+//			System.out.println(this.device.setFloodlight(Color.RED));
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -41,8 +42,14 @@ class ColorEye extends Peripheral {
 	 * The value is stored inside a Measure container, as the 'value' field.
 	 */
 	Measure read() {
-		System.out.println("red: " + this.device.getRedMode().getName());
-		System.out.println("rgb: " + this.device.getRGBMode().getName());
+		float [] red = new float[this.device.getRedMode().sampleSize()];
+		float [] rgb = new float[this.device.getRGBMode().sampleSize()];
+		
+		this.device.getRedMode().fetchSample(red, 0);
+		this.device.getRGBMode().fetchSample(rgb, 0);
+		
+		System.out.print("red: " + red[0]);
+		System.out.print("rgb: [" + rgb[0] + "," + rgb[1] + "," + rgb[0] + "]");
 		return new Measure(this.device.getColorID());
 	}
 

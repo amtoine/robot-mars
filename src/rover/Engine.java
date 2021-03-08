@@ -50,6 +50,6 @@ class Engine extends Peripheral {
 	 */
 	void write(Order order) {
 		this.device.setSpeed(order.speed);
-		this.device.rotate(order.angle, true);
+		this.device.rotate(order.angle);
 	}
 }

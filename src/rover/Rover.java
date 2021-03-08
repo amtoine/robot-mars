@@ -56,6 +56,7 @@ public class Rover {
 	// private default constructor.
 	private Rover() {
 		this.logger = new Logger();
+		this.mode = new RoverMode();
 		
 		this.us = new UltraEyes(SensorPort.S4);
 		this.cs = new ColorEye(SensorPort.S1);
@@ -67,6 +68,7 @@ public class Rover {
 	private Rover(Port ultrasonic_port, Port color_port,
 			     Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
 		this.logger = new Logger();
+		this.mode = new RoverMode();
 		
 		this.us = new UltraEyes(ultrasonic_port);
 		this.cs = new ColorEye(color_port);
@@ -119,10 +121,7 @@ public class Rover {
 	 */
 	public void checkBattery() {
 		// measure the battery voltage level.
-		float bc = Battery.getBatteryCurrent();
-		float mc = Battery.getMotorCurrent();
 		int bv = Battery.getVoltageMilliVolt();
-		this.logger.println("bc: "+bc+",mc: "+mc+",bv: "+bv);
 		
 		// compute voltages slices for enhanced display and log.
 		int bat = bv/1000;
@@ -135,6 +134,7 @@ public class Rover {
 		else if (bat == 2) 	{ this.logger.println("battery is low");         Blinker.blink(Blinker.RED,    Blinker.STILL); }
 		else if (bat == 1) 	{ this.logger.println("battery is very low");    Blinker.blink(Blinker.RED,    Blinker.SLOW); }
 		else if (bat == 0) 	{ this.logger.println("battery is critical");    Blinker.blink(Blinker.RED,    Blinker.FAST); }
+		this.logger.println("with " + bv);
 		
 		Button.waitForAnyPress(5000);
 		// throw error if the battery is too low.
@@ -159,6 +159,7 @@ public class Rover {
 	 */
 	public void connect_peripherals() {
 		// first the rover enters the diagnostic mode.
+		this.logger.println("starting diagnostic mode");
 		this.mode.enter_diagnostic_mode();
 		
 		// initialize and check every peripheral. if an error occurs whilst trying to talk to a given peripheral, put it in
@@ -187,6 +188,7 @@ public class Rover {
 		
 		// diagnostic is now done.
 		this.mode.stop();
+		this.logger.println("ending diagnostic mode");
 		
 		// if an error occurred, 'error' is non zero.
 		if (error != 0) { this.error(); }	
@@ -310,6 +312,7 @@ public class Rover {
 			LCD.clear();
 			id = this.cs.read().value;
 			System.out.println("id: " + id);
+			Button.waitForAnyPress();
 		}
 		this.logger.println("color done");	
 	}
@@ -329,6 +332,7 @@ public class Rover {
 		
 		// pliers
 		this.logger.println("closing pliers..."); this.logger.println(this.pliers.getTachoCount());
+		this.pliers.motor.device.setAcceleration(90);
 		this.pliers.grab();
 		while (this.pliers.isMoving()) {
 			this.logger.println(this.pliers.getTachoCount() +
@@ -373,6 +377,6 @@ public class Rover {
 		Pose pose = this.nav.getPoseProvider().getPose();
 		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading());
 		
-		this.nav.goTo(new Waypoint(pose.pointAt(10, pose.getHeading()+90)));
+		this.nav.goTo(new Waypoint(pose.pointAt(100, pose.getHeading()+90)));
 	}
 }

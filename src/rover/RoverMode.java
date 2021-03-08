@@ -88,8 +88,8 @@ public class RoverMode {
 	 * proper method to use to trigger 'diagnostic' sound and light effects.
 	 */
 	void enter_diagnostic_mode() {
-		Beeper.play(DIAGNOSTIC);
 		Blinker.blink(Blinker.ORANGE, Blinker.FAST);
+		Beeper.play(DIAGNOSTIC);
 	}
 	
 	/**
@@ -98,8 +98,8 @@ public class RoverMode {
 	 * the mission is compromised. This is the proper method to use to trigger 'error' sound and light effects.
 	 */
 	void enter_error_mode() {
-		Beeper.play(ERROR);
-		Blinker.blink(Blinker.RED, Blinker.FAST);		
+		Blinker.blink(Blinker.RED, Blinker.FAST);
+		Beeper.play(ERROR);	
 	}
 
 	/**
@@ -108,8 +108,8 @@ public class RoverMode {
 	 * proper method to use to trigger 'landing' sound and light effects.
 	 */
 	void enter_landind_mode() {
-		Beeper.play(LANDING);
-		Blinker.blink(Blinker.GREEN, Blinker.SLOW);		
+		Blinker.blink(Blinker.GREEN, Blinker.SLOW);	
+		Beeper.play(LANDING);	
 	}
 
 	/**
@@ -118,8 +118,8 @@ public class RoverMode {
 	 * environment. This is the proper method to use to trigger 'exploration' sound and light effects.
 	 */
 	void enter_exploration_mode() {
-		Beeper.play(EXPLORATION);
-		Blinker.blink(Blinker.GREEN, Blinker.SLOW);		
+		Blinker.blink(Blinker.GREEN, Blinker.SLOW);	
+		Beeper.play(EXPLORATION);	
 	}
 
 	/**
@@ -128,8 +128,8 @@ public class RoverMode {
 	 * retrieve the sample. This is the proper method to use to trigger 'harvest' sound and light effects.
 	 */
 	void enter_harvest_mode() {
-		Beeper.play(HARVEST);
-		Blinker.blink(Blinker.GREEN, Blinker.FAST);		
+		Blinker.blink(Blinker.GREEN, Blinker.FAST);	
+		Beeper.play(HARVEST);	
 	}
 
 	/**
@@ -138,8 +138,8 @@ public class RoverMode {
 	 * to trigger 'wait' sound and light effects.
 	 */
 	void enter_wait_mode() {
-		Beeper.play(WAIT);
-		Blinker.blink(Blinker.ORANGE, Blinker.SLOW);		
+		Blinker.blink(Blinker.ORANGE, Blinker.SLOW);
+		Beeper.play(WAIT);		
 	}
 
 	/**
@@ -148,8 +148,8 @@ public class RoverMode {
 	 * use to trigger 'sleep' sound and light effects.
 	 */
 	void enter_sleep_mode() {
-		Beeper.play(SLEEP);
-		Blinker.blink(Blinker.ORANGE, Blinker.STILL);		
+		Blinker.blink(Blinker.ORANGE, Blinker.STILL);
+		Beeper.play(SLEEP);		
 	}
 	
 	/**
