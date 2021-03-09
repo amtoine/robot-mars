@@ -18,6 +18,7 @@ import lejos.robotics.navigation.Pose;
 public class SampleSensor {
 	static final MapZone map = new Map();
 	static final MapZone recup_zone = new RecupZone();
+	static final double min_dist = 1;
 	int precision;
 	UltraEyes us;
 	Navigator nav;
@@ -37,9 +38,10 @@ public class SampleSensor {
 	public Point[] scan(double rotation,boolean relative) {	//TODO	
 		Pose rover_pose = odometer.getPose();
 				
-		Point[] sample_pose = {new Point(-1000,0),new Point(-1000,0)};
-		Point detected_pose = new Point(-1000,0);
+		Point[] samples = {new Point(-1000,0),new Point(-1000,0)};
+		Point detected_point = new Point(-1000,0);
 		Measure dist = us.read();
+		Measure last_dist;
 		double rotated = 0;
 		int i = 0;
 
@@ -47,53 +49,27 @@ public class SampleSensor {
 			nav.rotateTo(2+rover_pose.getHeading());
 			rotation = rotation + precision;
 			rover_pose = odometer.getPose();
+			last_dist = dist;
 			dist = us.read();
 			
-			detected_pose = rover_pose.pointAt(dist.value,rover_pose.getHeading());
+			detected_point = rover_pose.pointAt(dist.value,rover_pose.getHeading());
 			
-			if(map.inside(detected_pose) && !recup_zone.inside(detected_pose)) {
-				if(relative) {
-					detected_pose.x = (detected_pose.x-rover_pose.getX());
-					detected_pose.y = (detected_pose.y-rover_pose.getY());
-					sample_pose[i] = detected_pose;
+			if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
+				if(Math.abs(last_dist.value-dist.value)<min_dist) {
+					if(last_dist.value>dist.value) {
+						samples[i-1] = Rover.convertPose(relative,detected_point,rover_pose);
+					}
 				} else {
-					sample_pose[i] = detected_pose;
+					samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
+					i=1;
 				}
-				i = 1;
 			}
 		}
-		return sample_pose;
+		return samples;
 	}
-	
-//	public Point searchSample() {
-//		pilot.setLinearSpeed(20);
-//		pilot.setAngularSpeed(40);
-//		
-//		pilot.rotate(180);
-//		Point sp_pose = scan(360);
-//		if(map.inside(sp_pose)) {
-//			return sp_pose;
-//		} else {
-//			PoseProvider odometer = chassis.getPoseProvider();
-//			while(Math.abs(odometer.getPose().getHeading())>2) {
-//				pilot.rotate(2);
-//			}
-//			pilot.forward();
-//			pilot.travel(200);
-//			pilot.rotate(180);
-//			return scan(360);
-//			
-//		}
-//		
-//	}
 	
 	public static void main(String[] args) {
 		Rover rover = Rover.build();
-//		Wheel right_w = WheeledChassis.modelWheel(rover.rm.device, 4).offset(6.3);
-//		Wheel left_w = WheeledChassis.modelWheel(rover.lm.device, 4).offset(-6.3);
-//		Chassis chassis = new WheeledChassis(new Wheel[] {right_w, left_w}, WheeledChassis.TYPE_DIFFERENTIAL);
-//		
-//		MovePilot pilot = new MovePilot(chassis);
 		
 		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav); //to be integrated in rover class as attribute?
 		Point[] sp_pose = sp_sensor.scan(360,false);
