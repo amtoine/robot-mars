@@ -1,12 +1,8 @@
 package rover;
 
 import lejos.hardware.Button;
-import lejos.robotics.chassis.Chassis;
-import lejos.robotics.chassis.Wheel;
-import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.geometry.Point;
 import lejos.robotics.localization.PoseProvider;
-import lejos.robotics.navigation.MovePilot;
 import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
 
