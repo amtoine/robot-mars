@@ -10,7 +10,7 @@ class Grabber {
 	Grabber(Port port){
 		this.motor = new Engine(port);
 		this.motor_speed = 90;
-		this.pliers_opening_angle = 180;
+		this.pliers_opening_angle = 100;
 	}
 	
 	boolean connect() {
@@ -33,7 +33,7 @@ class Grabber {
 
 	public void release() {
 		this.motor.device.backward();
-		this.motor.write(new Order(this.motor_speed, this.pliers_opening_angle));
+		this.motor.write(new Order(this.motor_speed, -this.pliers_opening_angle));
 		this.motor.device.stop();
 	}
 }

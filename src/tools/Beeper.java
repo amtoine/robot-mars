@@ -26,7 +26,7 @@ public class Beeper {
 	 * 
 	 * @see Beeper#play(int)
 	 */
-	public static int HIGH_PITCH = 880;
+	public static int HIGH_PITCH = 1660;
 	
 	/**
 	 * Plays an alarm for some amount of time (blocking method).
@@ -129,11 +129,11 @@ public class Beeper {
 	 */
 	public static void play(int mode) {
 		int[] inst = Sound.PIANO;
-		int delay = 50;
+		int delay = 100;
 		
-		Sound.playNote(inst, ((mode&4) == 1)? HIGH_PITCH : LOW_PICTH, delay);
+		Sound.playNote(inst, (((mode>>2)&1) == 1)? HIGH_PITCH : LOW_PICTH, delay);
 		Delay.msDelay(delay);
-		Sound.playNote(inst, ((mode&2) == 1)? HIGH_PITCH : LOW_PICTH, delay);
+		Sound.playNote(inst, (((mode>>1)&1) == 1)? HIGH_PITCH : LOW_PICTH, delay);
 		Delay.msDelay(delay);
 		Sound.playNote(inst, ((mode&1) == 1)? HIGH_PITCH : LOW_PICTH, delay);
 	}

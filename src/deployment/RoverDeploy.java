@@ -1,5 +1,6 @@
 package deployment;
 
+import lejos.hardware.Sound;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import rover.Rover;
@@ -18,6 +19,7 @@ public class RoverDeploy {
 	 * @param args java arguments for main methods.
 	 */
 	public static void main(String[] args) {
+		Sound.setVolume(5);
 		//###################################################################################################################
 		//### full mission simulation #######################################################################################
 		//###################################################################################################################
@@ -29,16 +31,16 @@ public class RoverDeploy {
 		rover.wake_up_navigator();
 		rover.wake_up_sample_sensor();
 		
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
+//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
+//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
+//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
 		
 		//###################################################################################################################
 		//### several tests #################################################################################################
 		//###################################################################################################################
 //		rover.test_ultrasonic_sensor();
 //		rover.test_color_sensor();
-//		rover.test_motors();
+		rover.test_motors();
 		rover.test_navigator();
 	}
 }
