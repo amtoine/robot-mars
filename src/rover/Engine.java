@@ -31,6 +31,7 @@ class Engine extends Peripheral {
 	boolean connect() {
 		try {
 			this.device = new NXTRegulatedMotor(this.port);
+			this.device.getTachoCount();
 			return true;
 		} catch (Exception e) {
 			return false;
