@@ -51,8 +51,15 @@ public class Navigator {
 		}
 	}
 	
-	public void travel(float length, boolean b) {
-		
+	public void travel(float length, boolean immediate_return) {
+		int theta = (int)(length / Rover.WHEEL_RADIUS);
+		this.right.device.rotate(theta, immediate_return);
+		this.left.device.rotate( theta, immediate_return);
+		if (immediate_return) {
+			while (this.left.device.isMoving() || this.right.device.isMoving()) {
+				Thread.yield();
+			}
+		}
 	}
 
 	public void goTo(Point point) {

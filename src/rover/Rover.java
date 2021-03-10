@@ -514,6 +514,5 @@ public class Rover {
 		float dist = Rover.WHEEL_RADIUS*(l_tacho+r_tacho)/2;
 		this.nav.add_dist(dist);
 		this.logger.println("pose after: "+this.nav.getPose().toString());
-		
 	}
 }
