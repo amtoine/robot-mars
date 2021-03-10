@@ -1,4 +1,4 @@
-package rover;
+package tools;
 
 /**
  * Data container to write to any peripheral indifferently.
@@ -6,7 +6,7 @@ package rover;
  * @author Antoine Stevan.
  *
  */
-class Order {
+public class Order {
 	/** An order can contain a speed, for a Motor. */
 	int speed;
 	/** An order can contain an angle, for a Motor. */
@@ -17,8 +17,16 @@ class Order {
 	 * @param speed the speed for the Motor.
 	 * @param angle the relative rotation angle for the Motor.
 	 */
-	Order(int speed, int angle) {
+	public Order(int speed, int angle) {
 		this.speed = speed;
 		this.angle = angle;
+	}
+	
+	public int getSpeed() {
+		return this.speed;
+	}
+	
+	public int getAngle() {
+		return this.angle;
 	}
 }

@@ -2,6 +2,8 @@ package rover;
 
 import lejos.hardware.Device;
 import lejos.hardware.port.Port;
+import tools.Measure;
+import tools.Order;
 
 /**
  * An abstraction of any peripheral that could be connected to the EV3 lego brick.

@@ -7,6 +7,7 @@ import lejos.robotics.localization.PoseProvider;
 import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
 import tools.Beeper;
+import tools.Measure;
 
 /**
  * During the exploration phase, the rover rotates to detect potential obstacles/objects
@@ -18,14 +19,14 @@ public class SampleSensor {
 	static final MapZone recup_zone = new RecupZone();
 	static final double min_dist = 1;
 	int precision;
-	UltraEyes us;
+	UltraEyes ultra;
 	Navigator nav;
 	PoseProvider odometer;
 	Point[] samples;
 
 	public SampleSensor(int precision,UltraEyes us,PoseProvider odometer, Navigator nav) {
 		this.precision = precision;
-		this.us = us;
+		this.ultra = us;
 		this.nav = nav;
 		this.odometer = odometer;
 		this.samples = new Point[] {new Point(-1000,0),new Point(-1000,0)};
@@ -40,7 +41,7 @@ public class SampleSensor {
 		Pose rover_pose = odometer.getPose();
 
 		Point detected_point = new Point(-1000,0);
-		Measure dist = this.us.read();
+		Measure dist = this.ultra.read();
 		Measure last_dist;
 		double rotated = 0;
 		int i = 0;
@@ -52,11 +53,11 @@ public class SampleSensor {
 			rover_pose = this.odometer.getPose();
 			rover.logger.println("rover pose: (x:" + rover_pose.getX() + ", y:" + rover_pose.getY() + ", h: " + rover_pose.getHeading());
 			last_dist = dist;
-			dist = this.us.read();
-			rover.logger.println("d: " + dist.value);
+			dist = this.ultra.read();
+			rover.logger.println("d: " + dist.getValue());
 
 			rover_pose.getLocation().pointAt(i, i);
-			detected_point = rover_pose.pointAt(dist.value,rover_pose.getHeading());
+			detected_point = rover_pose.pointAt(dist.getValue(),rover_pose.getHeading());
 
 			rover.logger.println("point: " + detected_point.toString());
 			
@@ -65,7 +66,7 @@ public class SampleSensor {
 			rover.logger.println("map: " + ((m)? "in":"out") + ", rec: " + ((r)? "in":"out"));
 			if(m && !r) {
 				if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
-					if(detected_point.subtract(samples[last_index]).length()<min_dist && last_dist.value>dist.value) {
+					if(detected_point.subtract(samples[last_index]).length()<min_dist && last_dist.getValue()>dist.getValue()) {
 						this.samples[last_index] = Rover.convertPose(relative,detected_point,rover_pose);
 						Beeper.beep(2, 40);
 					} else {

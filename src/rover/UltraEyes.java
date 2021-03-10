@@ -4,6 +4,8 @@ import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.SampleProvider;
 import lejos.utility.Delay;
+import tools.Measure;
+import tools.Order;
 
 /**
  * The EV3 lego brick can be connected to an ultrasonic sensor, here called UltraEyes (because it looks like a pair of eyes).

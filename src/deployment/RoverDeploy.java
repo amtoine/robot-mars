@@ -28,10 +28,8 @@ public class RoverDeploy {
 		rover.land();
 		rover.checkBattery();
 		rover.connect_peripherals();
-		rover.wake_up_navigator();
-		rover.wake_up_sample_sensor();
 		
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
+//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
 		
@@ -42,5 +40,7 @@ public class RoverDeploy {
 //		rover.test_color_sensor();
 //		rover.test_motors();
 //		rover.test_navigator();
+		rover.test_navigator_square_antoine();
+		rover.test_navigator_sweep_antoine();
 	}
 }

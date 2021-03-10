@@ -1,4 +1,4 @@
-package rover;
+package tools;
 
 /**
  * Data container to read from any peripheral indifferently.
@@ -6,15 +6,19 @@ package rover;
  * @author Antoine Stevan.
  *
  */
-class Measure {
+public class Measure {
 	/** A Measure container is composed of a float value. */
-	float value;
+	private float value;
 	
 	/**
 	 * Takes a value and stores it inside a Measure data container.
 	 * @param value the real value to be stored inside the container.
 	 */
-	Measure(float value){
+	public Measure(float value){
 		this.value = value;
+	}
+	
+	public float getValue() {
+		return this.value;
 	}
 }
