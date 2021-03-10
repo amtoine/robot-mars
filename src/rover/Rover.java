@@ -1,6 +1,8 @@
 package rover;
 
 
+import java.util.Arrays;
+
 import lejos.hardware.Battery;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
@@ -232,10 +234,8 @@ public class Rover {
 	public boolean scanFromPoint(Pose p,int scan_angle) {
 		nav.rotateTo(p.getHeading());
 		sp_sensor.scan(scan_angle, false);
-		if(sp_sensor.samples[0].x==-1000) {
+		if(sp_sensor.samples[0].x!=-1000) {
 			this.logger.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
-			this.logger.println("ending exploration mode");
-			this.mode.stop();
 			return true;
 		}
 		return false;
@@ -270,7 +270,9 @@ public class Rover {
 			nav.goTo(wp[i].getX(),wp[i].getY());
 			i++;
 		}
-		
+		this.logger.println(Arrays.deepToString(wp));
+		this.logger.println("ending exploration mode");
+		this.mode.stop();
 		//System.out.println("  -> press any key to end exploration");
 		//Button.waitForAnyPress();
 	}

@@ -40,6 +40,7 @@ public class SampleSensor {
 		Measure last_dist;
 		double rotated = 0;
 		int i = 0;
+		int last_index = 0;
 
 		while(rotated<rotation) {
 			nav.rotateTo(this.precision+rover_pose.getHeading());
@@ -49,18 +50,16 @@ public class SampleSensor {
 			dist = us.read();
 			
 			detected_point = rover_pose.pointAt(dist.value,rover_pose.getHeading());
+//			float x = (float) (dist.value*Math.cos(rover_pose.getHeading())+rover_pose.getX());
+//			float y = (float) (dist.value*Math.sin(rover_pose.getHeading())+rover_pose.getY());
+//			detected_point = new Point(x,y);
 			
 			if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
-				if(Math.abs(last_dist.value-dist.value)<min_dist) {
-					if(last_dist.value>dist.value && i==1) {
-						if(this.samples[1].x==-1000) {
-							this.samples[i-1] = Rover.convertPose(relative,detected_point,rover_pose);
-						} else {
-							this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
-						}
-					}
+				if(detected_point.subtract(samples[last_index]).length()<min_dist && last_dist.value>dist.value) {
+					this.samples[last_index] = Rover.convertPose(relative,detected_point,rover_pose);
 				} else {
 					this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
+					last_index = i;
 					i=1;
 				}
 			}
