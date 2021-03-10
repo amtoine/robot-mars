@@ -231,9 +231,9 @@ public class Rover {
 	
 	public boolean scanFromPoint(Pose p,int scan_angle) {
 		nav.rotateTo(p.getHeading());
-		Point[] samples = sp_sensor.scan(scan_angle, false);
-		if(samples[0].x==-1000) {
-			this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
+		sp_sensor.scan(scan_angle, false);
+		if(sp_sensor.samples[0].x==-1000) {
+			this.logger.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
 			this.logger.println("ending exploration mode");
 			this.mode.stop();
 			return true;
