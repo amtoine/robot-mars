@@ -21,22 +21,23 @@ public class SampleSensor {
 	UltraEyes us;
 	Navigator nav;
 	PoseProvider odometer;
+	Point[] samples;
 
 	public SampleSensor(int precision,UltraEyes us,PoseProvider odometer, Navigator nav) {
 		this.precision = precision;
 		this.us = us;
 		this.nav = nav;
 		this.odometer = odometer;
+		this.samples = new Point[] {new Point(-1000,0),new Point(-1000,0)};
 	}
 	
 	/**
 	 * Searches for a sample by doing the specified rotation and stops when detects a sample 
 	 * @param rotation the rotation to do to scan the area, in degrees
 	 */
-	public Point[] scan(double rotation,boolean relative) {	//TODO	
-		Pose rover_pose = this.odometer.getPose();
+	public void scan(double rotation,boolean relative) {	//TODO	
+		Pose rover_pose = odometer.getPose();
 
-		Point[] samples = {new Point(-1000,0),new Point(-1000,0)};
 		Point detected_point = new Point(-1000,0);
 		Measure dist = this.us.read();
 		Measure last_dist;
@@ -56,34 +57,29 @@ public class SampleSensor {
 			if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
 				if(Math.abs(last_dist.value-dist.value)<SampleSensor.min_dist) {
 					if(last_dist.value>dist.value && i==1) {
-						if (samples[1].x==-1000) {
-							samples[i-1] = Rover.convertPose(relative,detected_point,rover_pose);
-							Beeper.twoBeeps();
+						if(this.samples[1].x==-1000) {
+							this.samples[i-1] = Rover.convertPose(relative,detected_point,rover_pose);
 						} else {
-							samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
-							Beeper.beep();
+							this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
 						}
 					}
 				} else {
-					samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
-					Beeper.beep();
+					this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
 					i=1;
 				}
 			}
 		}
-		System.out.println("end while loop");
-		return samples;
 	}
 	
 	public static void main(String[] args) {
 		Rover rover = Rover.build();
 		
-		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav); //to be integrated in rover class as attribute?
-		Point[] sp_pose = sp_sensor.scan(360,false);
+		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav);
+		sp_sensor.scan(360,false);
 		
-		if (sp_pose[0].x==-50) {
+		if (sp_sensor.samples[0].x==-1000) {
 			System.out.println("sample detected");
-			System.out.println("x,y: " + sp_pose[0].x + "," + sp_pose[0].y);
+			System.out.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
 		} else {
 			System.out.println("no sample detected");
 		}
