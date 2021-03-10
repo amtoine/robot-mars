@@ -46,7 +46,7 @@ public class Rover {
 	
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
-	
+	/** The sensor that searches for samples. */
 	SampleSensor sp_sensor;
 	
 	/** The diameter of the wheels, expressed in mm. */
@@ -218,7 +218,7 @@ public class Rover {
 	}
 	
 	public void wake_up_sample_sensor() {
-		this.sp_sensor = new SampleSensor(2,us,nav.getPoseProvider(),nav);
+		this.sp_sensor = new SampleSensor(10,us,nav.getPoseProvider(),nav);
 	}
 	
 	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
@@ -227,6 +227,18 @@ public class Rover {
 			p.y = (p.y-rover_pose.getY());
 		}
 		return p;
+	}
+	
+	public boolean scanFromPoint(Pose p,int scan_angle) {
+		nav.rotateTo(p.getHeading());
+		Point[] samples = sp_sensor.scan(scan_angle, false);
+		if(samples[0].x==-1000) {
+			this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
+			this.logger.println("ending exploration mode");
+			this.mode.stop();
+			return true;
+		}
+		return false;
 	}
 	
 	//######################################################################################################################
@@ -247,26 +259,17 @@ public class Rover {
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public Point[] explore() {
+	public void explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
 
-		System.out.println("rotateTo");
-		nav.rotateTo(-90);
-		System.out.println("sp_sensor.scan");
-		Point[] samples = sp_sensor.scan(180, false);
+		Pose[] wp = {new Pose(0,0,-90),new Pose(200,60,90)};
+		int i = 0;
 		
-		if (samples[0].x != -1000) { 
-			nav.rotateTo(0);
-			nav.goTo(200, 60);
-			nav.rotateTo(90);
-			samples = sp_sensor.scan(180, false);
+		while(i<wp.length && !scanFromPoint(wp[i],180)) {
+			nav.goTo(wp[i].getX(),wp[i].getY());
+			i++;
 		}
-		
-		this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
-		this.logger.println("ending exploration mode");
-		this.mode.stop();
-		return samples;
 		
 		//System.out.println("  -> press any key to end exploration");
 		//Button.waitForAnyPress();

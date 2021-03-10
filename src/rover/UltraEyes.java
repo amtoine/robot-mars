@@ -3,6 +3,7 @@ package rover;
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.robotics.SampleProvider;
+import lejos.utility.Delay;
 
 /**
  * The EV3 lego brick can be connected to an ultrasonic sensor, here called UltraEyes (because it looks like a pair of eyes).
@@ -53,6 +54,7 @@ class UltraEyes extends Peripheral {
 	 */
 	Measure read() {
 		this.sampler.fetchSample(this.distance, 0);
+		Delay.msDelay(300);
 		return new Measure(this.distance[0]);
 	}
 
