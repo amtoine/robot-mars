@@ -36,12 +36,12 @@ class Logger {
     /** The main feature of a logger is its ability to write in any log file. */
     BufferedWriter log;
     
-    /** The reference instant at which the logger has been opened, in seconds. */
-    static Instant open_time = Instant.now();
-    /** The reference time at which the logger has been opened, in seconds. */
-    static long open_time_s = Logger.open_time.getEpochSecond();
-    /** Precision on the reference time at which the logger has been opened, in nanoseconds. */
-    static int open_time_ns = Logger.open_time.getNano();
+//    /** The reference instant at which the logger has been opened, in seconds. */
+//    static Instant open_time = Instant.now();
+//    /** The reference time at which the logger has been opened, in seconds. */
+//    static long open_time_s = Logger.open_time.getEpochSecond();
+//    /** Precision on the reference time at which the logger has been opened, in nanoseconds. */
+//    static int open_time_ns = Logger.open_time.getNano();
 	
     /**
      * Formating the date and time to have something more user friendly inside log files.
@@ -52,10 +52,13 @@ class Logger {
      * @return a string of with following format '[DD/MM/YY HH:MM:SS]'
      */
 	static String give_date() {
-		Instant now = Instant.now();
-		double now_doub = (double)now.getEpochSecond() + (double)now.getNano()/1000000000 -
-		         ((double)Logger.open_time_s + (double)Logger.open_time_ns/1000000000);
-		return "["+Logger.df.format(now_doub)+"]";
+		return "";
+		
+//		Instant now = Instant.now();
+//		double now_doub = (double)now.getEpochSecond() + (double)now.getNano()/1000000000 -
+//		         ((double)Logger.open_time_s + (double)Logger.open_time_ns/1000000000);
+//		return "["+Logger.df.format(now_doub)+"]";
+		
 //		return "["+Logger.format.format(new Date()).replaceAll(" PM", "").replaceAll(" AM", "").replaceAll(", ", " ")+"]";
 	}
 	

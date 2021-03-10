@@ -139,7 +139,7 @@ public class Rover {
 		else if (bat == 2) 	{ this.logger.print("battery is low");         Blinker.blink(Blinker.RED,    Blinker.STILL); }
 		else if (bat == 1) 	{ this.logger.print("battery is very low");    Blinker.blink(Blinker.RED,    Blinker.SLOW); }
 		else if (bat == 0) 	{ this.logger.print("battery is critical");    Blinker.blink(Blinker.RED,    Blinker.FAST); }
-		this.logger.println("with " + bv + " mV");
+		this.logger.println(" with " + bv + " mV");
 		
 		this.mode.stop();
 		this.logger.println("battery checked");
@@ -250,20 +250,19 @@ public class Rover {
 	public Point[] explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
-		
+
+		System.out.println("rotateTo");
 		nav.rotateTo(-90);
+		System.out.println("sp_sensor.scan");
 		Point[] samples = sp_sensor.scan(180, false);
-		if(samples[0].x==-1000) {
-			this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
-			this.logger.println("ending exploration mode");
-			this.mode.stop();
-			return samples;
+		
+		if (samples[0].x != -1000) { 
+			nav.rotateTo(0);
+			nav.goTo(200, 60);
+			nav.rotateTo(90);
+			samples = sp_sensor.scan(180, false);
 		}
 		
-		nav.rotateTo(0);
-		nav.goTo(200, 60);
-		nav.rotateTo(90);
-		samples = sp_sensor.scan(180, false);
 		this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
