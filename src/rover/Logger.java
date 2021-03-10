@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.time.Instant;
+import java.util.Date;
 
 /**
  * Output streams wrapper to help writing stuff in both the console and log files.
@@ -52,14 +52,13 @@ class Logger {
      * @return a string of with following format '[DD/MM/YY HH:MM:SS]'
      */
 	static String give_date() {
-		return "";
+//		return "";
 		
 //		Instant now = Instant.now();
 //		double now_doub = (double)now.getEpochSecond() + (double)now.getNano()/1000000000 -
 //		         ((double)Logger.open_time_s + (double)Logger.open_time_ns/1000000000);
 //		return "["+Logger.df.format(now_doub)+"]";
-		
-//		return "["+Logger.format.format(new Date()).replaceAll(" PM", "").replaceAll(" AM", "").replaceAll(", ", " ")+"]";
+		return "["+Logger.format.format(new Date()).replaceAll(" PM", "").replaceAll(" AM", "").replaceAll(", ", " ")+"]";
 	}
 	
 	/**

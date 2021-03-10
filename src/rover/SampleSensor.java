@@ -1,11 +1,11 @@
 package rover;
 
-import lejos.hardware.Button;
+import java.util.Arrays;
+
 import lejos.robotics.geometry.Point;
 import lejos.robotics.localization.PoseProvider;
 import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
-import lejos.utility.Delay;
 import tools.Beeper;
 
 /**
@@ -29,13 +29,14 @@ public class SampleSensor {
 		this.nav = nav;
 		this.odometer = odometer;
 		this.samples = new Point[] {new Point(-1000,0),new Point(-1000,0)};
+		System.out.println(SampleSensor.map.center);;
 	}
 	
 	/**
 	 * Searches for a sample by doing the specified rotation and stops when detects a sample 
 	 * @param rotation the rotation to do to scan the area, in degrees
 	 */
-	public void scan(double rotation,boolean relative) {	//TODO	
+	public void scan(double rotation,boolean relative, Rover rover) {	//TODO	
 		Pose rover_pose = odometer.getPose();
 
 		Point detected_point = new Point(-1000,0);
@@ -48,42 +49,54 @@ public class SampleSensor {
 			this.nav.rotateTo(this.precision+rover_pose.getHeading());
 			rotated += this.precision;
 			rover_pose = this.odometer.getPose();
+			rover.logger.println("rover pose: (x:" + rover_pose.getX() + ", y:" + rover_pose.getY() + ", h: " + rover_pose.getHeading());
 			last_dist = dist;
 			dist = this.us.read();
-			System.out.println(dist.value);
+			rover.logger.println("d: " + dist.value);
 
+			rover_pose.getLocation().pointAt(i, i);
 			detected_point = rover_pose.pointAt(dist.value,rover_pose.getHeading());
+			rover.logger.println("point: " + detected_point.toString());
 			
-			if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
+			boolean m = map.inside(detected_point);
+			boolean r = recup_zone.inside(detected_point);
+			rover.logger.println("map: " + ((m)? "in":"out") + ", rec: " + ((r)? "in":"out"));
+			if(m && !r) {
 				if(Math.abs(last_dist.value-dist.value)<SampleSensor.min_dist) {
 					if(last_dist.value>dist.value && i==1) {
 						if(this.samples[1].x==-1000) {
 							this.samples[i-1] = Rover.convertPose(relative,detected_point,rover_pose);
+							Beeper.beep(2, 40);
 						} else {
 							this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
+							Beeper.beep(1, 40);
 						}
+					} else {
+						Beeper.beep(3, 40);
 					}
 				} else {
 					this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
+					Beeper.beep(4, 40);
 					i=1;
 				}
 			}
 		}
+		rover.logger.println(Arrays.deepToString(this.samples));
 	}
 	
-	public static void main(String[] args) {
-		Rover rover = Rover.build();
-		
-		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav);
-		sp_sensor.scan(360,false);
-		
-		if (sp_sensor.samples[0].x==-1000) {
-			System.out.println("sample detected");
-			System.out.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
-		} else {
-			System.out.println("no sample detected");
-		}
-		Button.waitForAnyPress();
-	}
+//	public static void main(String[] args) {
+//		Rover rover = Rover.build();
+//		
+//		SampleSensor sp_sensor = new SampleSensor(2,rover.us,rover.nav.getPoseProvider(),rover.nav);
+//		sp_sensor.scan(360,false);
+//		
+//		if (sp_sensor.samples[0].x==-1000) {
+//			System.out.println("sample detected");
+//			System.out.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
+//		} else {
+//			System.out.println("no sample detected");
+//		}
+//		Button.waitForAnyPress();
+//	}
 
 }

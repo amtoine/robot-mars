@@ -53,8 +53,9 @@ class UltraEyes extends Peripheral {
 	 * The value is stored inside a Measure container, as the 'value' field.
 	 */
 	Measure read() {
+		Delay.msDelay(200);
 		this.sampler.fetchSample(this.distance, 0);
-		Delay.msDelay(300);
+		Delay.msDelay(100);
 		return new Measure(this.distance[0]);
 	}
 

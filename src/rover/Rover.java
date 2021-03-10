@@ -213,8 +213,11 @@ public class Rover {
 		Wheel right = WheeledChassis.modelWheel(this.lm.device, WHEEL_DIAMETER).offset( HALF_WIDTH);
 		Chassis chassis = new WheeledChassis(new Wheel[] {right, left}, WheeledChassis.TYPE_DIFFERENTIAL);
 		
+		MovePilot pilot =new MovePilot(chassis);
+		pilot.setAngularAcceleration(10);
+		pilot.setAngularSpeed(20);
 		// from the wheels and the chassis, extract a navigator.
-		this.nav = new Navigator(new MovePilot(chassis), chassis.getPoseProvider());
+		this.nav = new Navigator(pilot, chassis.getPoseProvider());
 	}
 	
 	public void wake_up_sample_sensor() {
@@ -231,14 +234,14 @@ public class Rover {
 	
 	public boolean scanFromPoint(Pose p,int scan_angle) {
 		nav.rotateTo(p.getHeading());
-		sp_sensor.scan(scan_angle, false);
+		sp_sensor.scan(scan_angle, false, this);
 		if(sp_sensor.samples[0].x==-1000) {
+			this.logger.println("nothing detected.");
+			return false;
+		} else {
 			this.logger.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
-			this.logger.println("ending exploration mode");
-			this.mode.stop();
 			return true;
 		}
-		return false;
 	}
 	
 	//######################################################################################################################
@@ -262,6 +265,8 @@ public class Rover {
 	public void explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
+		
+		this.pliers.grab();
 
 		Pose[] wp = {new Pose(0,0,-90),new Pose(200,60,90)};
 		int i = 0;
@@ -271,6 +276,8 @@ public class Rover {
 			i++;
 		}
 		
+		this.logger.println("ending exploration mode");
+		this.mode.stop();
 		//System.out.println("  -> press any key to end exploration");
 		//Button.waitForAnyPress();
 	}
@@ -415,8 +422,14 @@ public class Rover {
 	/** */
 	public void test_navigator() {
 		Pose pose = this.nav.getPoseProvider().getPose();
-		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading());
+		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading() + " & " + this.rm.device.getTachoCount());
 		
+		this.logger.println("goTo");
 		this.nav.goTo(new Waypoint(pose.pointAt(100, pose.getHeading()+90)));
+		
+		this.logger.println("travel");
+		this.nav.getMoveController().forward();
+		this.nav.getMoveController().travel(10);
+		this.logger.println(this.nav.getPoseProvider().getPose().toString() + ", " + this.rm.device.getTachoCount());
 	}
 }

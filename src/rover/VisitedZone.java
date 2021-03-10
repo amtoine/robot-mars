@@ -4,7 +4,7 @@ import lejos.robotics.geometry.Point;
 
 public class VisitedZone extends MapZone {
 	Point center;
-	static final double diameter = 250;
+	static final double diameter = 2.50;
 	int angle;
 	int start_angle;
 	
