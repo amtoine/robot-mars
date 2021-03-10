@@ -67,10 +67,12 @@ public class SampleSensor {
 				if(map.inside(detected_point) && !recup_zone.inside(detected_point)) {
 					if(detected_point.subtract(samples[last_index]).length()<min_dist && last_dist.value>dist.value) {
 						this.samples[last_index] = Rover.convertPose(relative,detected_point,rover_pose);
+						Beeper.beep(2, 40);
 					} else {
 						this.samples[i] = Rover.convertPose(relative,detected_point,rover_pose);
+						Beeper.beep(1, 40);
 						last_index = i;
-					i=1;
+						i=1;
 					}
 				}
 			}

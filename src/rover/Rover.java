@@ -48,15 +48,17 @@ public class Rover {
 	
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
-	/** The sensor that searches for samples. */
-	SampleSensor sp_sensor;
 	
 	/** The diameter of the wheels, expressed in mm. */
-	static int WHEEL_DIAMETER = 40;
+	static int WHEEL_DIAMETER = 56;
 	/** The half distance between the two axis of the tracks, expressed in mm. */
-	static int HALF_WIDTH = 63;
+	static int HALF_WIDTH = 138/2;
 	/** As the battery is full with 9000mV, we assume that the situation is critical below 10%, i.e. 900mV*/
 	private static final int VOLTAGE_THRESHOLD = 900;
+	
+	static final MapZone map = new Map();
+	static final MapZone recup_zone = new RecupZone();
+	static final double min_dist = 0.3;
 	
 	// private default constructor.
 	private Rover() {
@@ -222,10 +224,6 @@ public class Rover {
 		this.nav = new Navigator(pilot, chassis.getPoseProvider());
 	}
 	
-	public void wake_up_sample_sensor() {
-		this.sp_sensor = new SampleSensor(10,us,nav.getPoseProvider(),nav);
-	}
-	
 	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
 		if(relative) {
 			p.x = (p.x-rover_pose.getX());
@@ -234,16 +232,57 @@ public class Rover {
 		return p;
 	}
 	
-	public boolean scanFromPoint(Pose p,int scan_angle) {
-		nav.rotateTo(p.getHeading());
-		sp_sensor.scan(scan_angle, false, this);
-		if(sp_sensor.samples[0].x==-1000) {
-			this.logger.println("nothing detected.");
-			return false;
-		} else {
-			this.logger.println("x,y: " + sp_sensor.samples[0].x + "," + sp_sensor.samples[0].y);
-			return true;
+	Point[] scan() {
+		float angles[] = new float[19];
+		float dists[] = new float[19];
+		
+		for (int i = 0; i < angles.length; i++) {
+			angles[i] = 10*i - 90;
+			this.nav.rotateTo(angles[i]);
+			dists[i] = this.us.read().value;
+			System.out.println(dists[i]);
 		}
+		this.logger.println(Arrays.toString(angles));
+		this.logger.println(Arrays.toString(dists));
+		
+		Point obstacles[] = new Point[19];
+		for (int i = 0; i < obstacles.length; i++) {
+			obstacles[i] = new Point(Float.MAX_VALUE, Float.MAX_VALUE);
+		}
+		int j = 0;
+		boolean obst = false;
+		
+		int x = 0;
+		int y = 0;
+		Point pos = new Point(x,y);
+		for (int i = 0; i < angles.length; i++) {
+			if (dists[i] < Double.MAX_VALUE) {
+				obst = true;
+				if (dists[i] < pos.subtract(obstacles[j]).length()) {
+					Point detected_point = pos.pointAt(dists[i], angles[i]);
+					if(Rover.map.inside(detected_point) && !Rover.recup_zone.inside(detected_point)) {
+						if (detected_point.subtract(obstacles[j]).length() > Rover.min_dist) {
+							j++;
+						}
+						obstacles[j] = detected_point;
+					}
+				} else {
+					obstacles[j] = obstacles[j];
+				}
+			} else {
+				if (obst) {
+					j++;
+					obst = false;
+				}
+			}
+		}
+		
+		this.logger.println(Arrays.deepToString(obstacles));
+		Point result[] = new Point[(obst)? j+1:j];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = obstacles[i];
+		}
+		return result;
 	}
 	
 	//######################################################################################################################
@@ -270,19 +309,26 @@ public class Rover {
 		
 		this.pliers.grab();
 
-		Pose[] wp = {new Pose(0,0,-90),new Pose(200,60,90)};
-		int i = 0;
+//		Pose[] wp = {new Pose(0,0,-90),new Pose(200,60,90)};
+//		int i = 0;
+//		
+//		while(i<wp.length && !scanFromPoint(wp[i],180)) {
+//			nav.goTo(wp[i].getX(),wp[i].getY());
+//			i++;
+//		}
+//		this.logger.println(Arrays.deepToString(wp));
 		
-		while(i<wp.length && !scanFromPoint(wp[i],180)) {
-			nav.goTo(wp[i].getX(),wp[i].getY());
-			i++;
+		Point[] res = this.scan();
+		this.logger.println("res: " + Arrays.deepToString(res));
+		
+		for (int i = 0; i < res.length; i++) {
+			Beeper.beep(3, 50);
+			Button.waitForAnyPress();
+			this.nav.goTo(new Waypoint(res[i]));
 		}
-		this.logger.println(Arrays.deepToString(wp));
 
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
-		//System.out.println("  -> press any key to end exploration");
-		//Button.waitForAnyPress();
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
@@ -291,8 +337,6 @@ public class Rover {
 		this.logger.println("starting harvest mode");
 		this.mode.enter_harvest_mode();
 		
-		//System.out.println("  -> press any key to end harvest");
-		//Button.waitForAnyPress();
 		this.logger.println("ending harvest mode");
 		this.mode.stop();		
 	}
