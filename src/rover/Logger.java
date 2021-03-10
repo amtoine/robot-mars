@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.util.Date;
 
 /**
  * Output streams wrapper to help writing stuff in both the console and log files.
@@ -36,12 +35,8 @@ class Logger {
     /** The main feature of a logger is its ability to write in any log file. */
     BufferedWriter log;
     
-//    /** The reference instant at which the logger has been opened, in seconds. */
-//    static Instant open_time = Instant.now();
-//    /** The reference time at which the logger has been opened, in seconds. */
-//    static long open_time_s = Logger.open_time.getEpochSecond();
-//    /** Precision on the reference time at which the logger has been opened, in nanoseconds. */
-//    static int open_time_ns = Logger.open_time.getNano();
+    /** Reference time at which the logger has been opened, in nanoseconds. */
+    static final long begin_time = System.nanoTime();
 	
     /**
      * Formating the date and time to have something more user friendly inside log files.
@@ -49,16 +44,13 @@ class Logger {
      * Logger method removes the trailing 'PM' or 'AM', removes the ',' in the middle and adds some brackets in front and
      * behind date and time.
      * 
-     * @return a string of with following format '[DD/MM/YY HH:MM:SS]'
+     * @return a string of with following format '[SSS.MMM]'
      */
 	static String give_date() {
-//		return "";
-		
-//		Instant now = Instant.now();
-//		double now_doub = (double)now.getEpochSecond() + (double)now.getNano()/1000000000 -
-//		         ((double)Logger.open_time_s + (double)Logger.open_time_ns/1000000000);
-//		return "["+Logger.df.format(now_doub)+"]";
-		return "["+Logger.format.format(new Date()).replaceAll(" PM", "").replaceAll(" AM", "").replaceAll(", ", " ")+"]";
+		long time = System.nanoTime() - Logger.begin_time;
+		int sec = (int)(time/1e9);
+		int pref = (sec == 0)? 0 : Integer.toString(sec).length();
+		return "["+sec+"."+(int)(time/Math.pow(10, 6+pref))+"]";
 	}
 	
 	/**
@@ -134,12 +126,14 @@ class Logger {
 	public static void main(String[] args) throws IOException {
 		Logger logger = new Logger();
 		logger.open("log.log");
-		for (int i = 0; i < 250; i++) {
+		for (int i = 0; i < 110; i++) {
 			logger.println("Hello World!");
 			try { Thread.sleep(100); } catch (InterruptedException e) { e.printStackTrace(); }
 		}
 		logger.write("done");
 		logger.close();
+		
+		
 		
 	}
 

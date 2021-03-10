@@ -9,16 +9,12 @@ import lejos.hardware.lcd.LCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.Port;
 import lejos.hardware.port.SensorPort;
-import lejos.robotics.chassis.Chassis;
-import lejos.robotics.chassis.Wheel;
-import lejos.robotics.chassis.WheeledChassis;
 import lejos.robotics.geometry.Point;
-import lejos.robotics.navigation.MovePilot;
-import lejos.robotics.navigation.Navigator;
 import lejos.robotics.navigation.Pose;
 import lejos.robotics.navigation.Waypoint;
 import tools.Beeper;
 import tools.Blinker;
+import tools.Order;
 
 /**
  * To carry out a mission, the most common way is to build and use a rover.
@@ -36,52 +32,60 @@ public class Rover {
 	RoverMode mode;
 	
 	/** The ultrasonic sensor of the rover. */
-	UltraEyes us;
+	UltraEyes ultra;
 	/** The color sensor of the rover. */
-	ColorEye  cs;
+	ColorEye  color;
 	/** The pliers in front of the rover, used to grab samples. */
 	Grabber   pliers;
 	/** The right motor of the rover, used to actuate the right track. */
-	Engine    rm;
+	Engine    right;
 	/** The left motor of the rover, used to actuate the left track. */
-	Engine    lm;
+	Engine    left;
 	
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
 	
 	/** The diameter of the wheels, expressed in mm. */
-	static int WHEEL_DIAMETER = 56;
+	static final int WHEEL_RADIUS = 56/2;
 	/** The half distance between the two axis of the tracks, expressed in mm. */
-	static int HALF_WIDTH = 138/2;
+	static final int HALF_WIDTH = 138/2;
 	/** As the battery is full with 9000mV, we assume that the situation is critical below 10%, i.e. 900mV*/
 	private static final int VOLTAGE_THRESHOLD = 900;
 	
+	/** A map of the whole intervention zone. */
 	static final MapZone map = new Map();
+	/** A map of the recuperation zone which is a subset of the intervention zone. */
 	static final MapZone recup_zone = new RecupZone();
-	static final double min_dist = 0.3;
+	/** The maximum object size in the zone.
+	 * If two objects are away from more than this threshold, they have to be part of two distinct objetcs. */
+	static final double MAX_OBJECT_SIZE = 0.3;
 	
 	// private default constructor.
 	private Rover() {
 		this.logger = new Logger();
 		this.mode = new RoverMode();
 		
-		this.us = new UltraEyes(SensorPort.S4);
-		this.cs = new ColorEye(SensorPort.S1);
+		this.ultra  = new UltraEyes(SensorPort.S4);
+		this.color  = new ColorEye(SensorPort.S1);
 		this.pliers = new Grabber(MotorPort.A);
-		this.rm = new Engine(MotorPort.B);
-		this.lm = new Engine(MotorPort.C);
+		this.right  = new Engine(MotorPort.B);
+		this.left   = new Engine(MotorPort.C);
+		
+		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
 	}
 	// private constructor with parameters.
 	private Rover(Port ultrasonic_port, Port color_port,
-			     Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
+			      Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
 		this.logger = new Logger();
 		this.mode = new RoverMode();
 		
-		this.us = new UltraEyes(ultrasonic_port);
-		this.cs = new ColorEye(color_port);
+		this.ultra  = new UltraEyes(ultrasonic_port);
+		this.color  = new ColorEye(color_port);
 		this.pliers = new Grabber(pliers_motor_port);
-		this.rm = new Engine(right_motor_port);
-		this.lm = new Engine(left_motor_port);
+		this.right  = new Engine(right_motor_port);
+		this.left   = new Engine(left_motor_port);
+		
+		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
 	}
 	
 	/**
@@ -177,25 +181,25 @@ public class Rover {
 		// initialize and check every peripheral. if an error occurs whilst trying to talk to a given peripheral, put it in
 		// the 'error' variable.
 		int error = 0;
-		if (this.us.connect()) 
+		if (this.ultra.connect()) 
 				{ Beeper.beep();     this.logger.println("con. us: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.us.port.getName() + ")");
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.ultra.port.getName() + ")");
 		          error +=  1; }
-		if (this.cs.connect()) 
+		if (this.color.connect()) 
 				{ Beeper.beep();     this.logger.println("con. cs: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.cs.port.getName() + ")");
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.color.port.getName() + ")");
 		          error +=  2; }
 		if (this.pliers.connect()) 
 				{ Beeper.beep();     this.logger.println("con. pm: ok"); }
 		else 	{ Beeper.twoBeeps(); this.logger.println("con. pm: ko (" + this.pliers.motor.port.getName() + ")");
 		          error +=  4; }
-		if (this.rm.connect()) 
+		if (this.right.connect()) 
 				{ Beeper.beep();     this.logger.println("con. rm: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. rm: ko (" + this.rm.port.getName() + ")");
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. rm: ko (" + this.right.port.getName() + ")");
 		          error +=  8; }
-		if (this.lm.connect()) 
+		if (this.left.connect()) 
 				{ Beeper.beep();     this.logger.println("con. lm: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. lm: ko (" + this.lm.port.getName() + ")");
+		else 	{ Beeper.twoBeeps(); this.logger.println("con. lm: ko (" + this.left.port.getName() + ")");
 	              error += 16; }
 		
 		// diagnostic is now done.
@@ -204,24 +208,6 @@ public class Rover {
 		
 		// if an error occurred, 'error' is non zero.
 		if (error != 0) { this.error(); }	
-	}
-	
-	/**
-	 * Before trying to accomplish any mission, the rover needs a navigator.
-	 * To go from one location to another, the rover uses a navigator which handles the tracks control part. This method
-	 * wakes up the navigator by initializing wheels, chassis and navigator from leJOS.
-	 */
-	public void wake_up_navigator() {
-		// use structural constants to build the wheels and the chassis.
-		Wheel left  = WheeledChassis.modelWheel(this.rm.device, WHEEL_DIAMETER).offset(-HALF_WIDTH);
-		Wheel right = WheeledChassis.modelWheel(this.lm.device, WHEEL_DIAMETER).offset( HALF_WIDTH);
-		Chassis chassis = new WheeledChassis(new Wheel[] {right, left}, WheeledChassis.TYPE_DIFFERENTIAL);
-		
-		MovePilot pilot =new MovePilot(chassis);
-		pilot.setAngularAcceleration(10);
-		pilot.setAngularSpeed(20);
-		// from the wheels and the chassis, extract a navigator.
-		this.nav = new Navigator(pilot, chassis.getPoseProvider());
 	}
 	
 	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
@@ -239,7 +225,7 @@ public class Rover {
 		for (int i = 0; i < angles.length; i++) {
 			angles[i] = 10*i - 90;
 			this.nav.rotateTo(angles[i]);
-			dists[i] = this.us.read().value;
+			dists[i] = this.ultra.read().getValue();
 			System.out.println(dists[i]);
 		}
 		this.logger.println(Arrays.toString(angles));
@@ -256,25 +242,39 @@ public class Rover {
 		int y = 0;
 		Point pos = new Point(x,y);
 		for (int i = 0; i < angles.length; i++) {
+			String msg = "d["+i+"]="+dists[i]+": ";
 			if (dists[i] < Double.MAX_VALUE) {
+				msg.concat("finite");
 				obst = true;
 				if (dists[i] < pos.subtract(obstacles[j]).length()) {
+					msg.concat(", enough close");
 					Point detected_point = pos.pointAt(dists[i], angles[i]);
 					if(Rover.map.inside(detected_point) && !Rover.recup_zone.inside(detected_point)) {
-						if (detected_point.subtract(obstacles[j]).length() > Rover.min_dist) {
+						msg.concat(", inside the zone");
+						if (detected_point.subtract(obstacles[j]).length() > Rover.MAX_OBJECT_SIZE) {
 							j++;
+							msg.concat(", too big -> next obstacle "+j);
+						} else {
+							msg.concat(", good size -> update on "+j);
 						}
 						obstacles[j] = detected_point;
+					} else {
+						msg.concat(", outside the zone -> no update on "+j);
 					}
 				} else {
-					obstacles[j] = obstacles[j];
+					msg.concat(", not enough close -> no update on "+j);
 				}
 			} else {
+				msg.concat("infinite");
 				if (obst) {
+					msg.concat(", end of obstacle -> next obstacle "+j);
 					j++;
 					obst = false;
+				} else {
+					msg.concat("not in obstacle -> no update on "+j);
 				}
 			}
+			this.logger.println(msg);
 		}
 		
 		this.logger.println(Arrays.deepToString(obstacles));
@@ -324,7 +324,7 @@ public class Rover {
 		for (int i = 0; i < res.length; i++) {
 			Beeper.beep(3, 50);
 			Button.waitForAnyPress();
-			this.nav.goTo(new Waypoint(res[i]));
+			this.nav.goTo(res[i]);
 		}
 
 		this.logger.println("ending exploration mode");
@@ -393,7 +393,7 @@ public class Rover {
 		this.logger.println("starting tests on ultra...");
 		float dist;
 		while (Button.readButtons() != Button.ID_ENTER) {
-			dist = this.us.read().value;
+			dist = this.ultra.read().getValue();
 			System.out.println(dist);
 		}
 		this.logger.println("ultra done");
@@ -404,7 +404,7 @@ public class Rover {
 		float id = -1;
 		while (Button.readButtons() != Button.ID_ENTER) {
 			LCD.clear();
-			id = this.cs.read().value;
+			id = this.color.read().getValue();
 			System.out.println("id: " + id);
 			Button.waitForAnyPress();
 		}
@@ -419,8 +419,8 @@ public class Rover {
 		this.logger.println("starting tests on motors...");
 		// reseting the tacho counts.
 		this.pliers.motor.device.resetTachoCount();
-		this.rm.device.resetTachoCount();
-		this.lm.device.resetTachoCount();
+		this.right.device.resetTachoCount();
+		this.left.device.resetTachoCount();
 		
 		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0); Button.waitForAnyPress(); Beeper.beep();
 		
@@ -442,19 +442,19 @@ public class Rover {
 		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
 
 		// right track
-		this.logger.println("rotating right..."); this.logger.println(this.rm.device.getTachoCount());
-		this.rm.write(new Order(90, 360));  
-		while (this.rm.device.isMoving()) {
-			this.logger.println(this.rm.device.getTachoCount() + "(" + this.rm.device.getRotationSpeed() + ")");
+		this.logger.println("rotating right..."); this.logger.println(this.right.device.getTachoCount());
+		this.right.write(new Order(90, 360));  
+		while (this.right.device.isMoving()) {
+			this.logger.println(this.right.device.getTachoCount() + "(" + this.right.device.getRotationSpeed() + ")");
 		}
 		this.logger.println("done");
 		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);  Button.waitForAnyPress(); Beeper.beep();
 
 		// left track
-		this.logger.println("rotating left..."); this.logger.println(this.lm.device.getTachoCount());
-		this.lm.write(new Order(90, 360));  
-		while (this.lm.device.isMoving()) {
-			this.logger.println(this.lm.device.getTachoCount() + "(" + this.lm.device.getRotationSpeed() + ")");
+		this.logger.println("rotating left..."); this.logger.println(this.left.device.getTachoCount());
+		this.left.write(new Order(90, 360));  
+		while (this.left.device.isMoving()) {
+			this.logger.println(this.left.device.getTachoCount() + "(" + this.left.device.getRotationSpeed() + ")");
 		}
 		this.logger.println("done");
 		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();
@@ -468,15 +468,15 @@ public class Rover {
 	//###################################################################################################################
 	/** */
 	public void test_navigator() {
-		Pose pose = this.nav.getPoseProvider().getPose();
-		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading() + " & " + this.rm.device.getTachoCount());
+		Pose pose = this.nav.getPose();
+		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading() + " & " + this.right.device.getTachoCount());
 		
 		this.logger.println("goTo");
 		this.nav.goTo(new Waypoint(pose.pointAt(100, pose.getHeading()+90)));
 		
 		this.logger.println("travel");
-		this.nav.getMoveController().forward();
-		this.nav.getMoveController().travel(10);
-		this.logger.println(this.nav.getPoseProvider().getPose().toString() + ", " + this.rm.device.getTachoCount());
+		this.nav.forward();
+		this.nav.travel(10);
+		this.logger.println(this.nav.getPose().toString() + ", " + this.right.device.getTachoCount());
 	}
 }

@@ -3,6 +3,8 @@ package rover;
 import lejos.hardware.motor.NXTRegulatedMotor;
 import lejos.hardware.port.Port;
 import lejos.robotics.RegulatedMotor;
+import tools.Measure;
+import tools.Order;
 
 /**
  * The EV3 lego brick can be connected to motors, here called Engine.
@@ -11,6 +13,9 @@ import lejos.robotics.RegulatedMotor;
  *
  */
 class Engine extends Peripheral {
+	private static final int speed = 10;
+	private static final int acceleration = 10;
+	
 	/** Precision about the Device of an Engine. Here, it is a RegulatedMotor. */
 	RegulatedMotor device;
 	
@@ -31,7 +36,9 @@ class Engine extends Peripheral {
 	boolean connect() {
 		try {
 			this.device = new NXTRegulatedMotor(this.port);
-			this.device.getTachoCount();
+			this.device.resetTachoCount();
+			this.device.setSpeed(Engine.speed);
+			this.device.setAcceleration(Engine.acceleration);
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -50,7 +57,7 @@ class Engine extends Peripheral {
 	 * rotation.
 	 */
 	void write(Order order) {
-		this.device.setSpeed(order.speed);
-		this.device.rotate(order.angle);
+		this.device.setSpeed(order.getSpeed());
+		this.device.rotate(order.getAngle());
 	}
 }

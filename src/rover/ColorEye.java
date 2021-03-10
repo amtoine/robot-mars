@@ -2,6 +2,8 @@ package rover;
 
 import lejos.hardware.port.Port;
 import lejos.hardware.sensor.EV3ColorSensor;
+import tools.Measure;
+import tools.Order;
 
 /**
  * The EV3 lego brick can be connected to a color sensor, here called ColorEye (because it kind of looks like a single eye).
