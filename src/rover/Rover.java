@@ -46,7 +46,7 @@ public class Rover {
 	
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
-	
+	/** The sensor that searches for samples. */
 	SampleSensor sp_sensor;
 	
 	/** The diameter of the wheels, expressed in mm. */
@@ -224,6 +224,18 @@ public class Rover {
 		return p;
 	}
 	
+	public boolean scanFromPoint(Pose p,int scan_angle) {
+		nav.rotateTo(p.getHeading());
+		Point[] samples = sp_sensor.scan(scan_angle, false);
+		if(samples[0].x==-1000) {
+			this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
+			this.logger.println("ending exploration mode");
+			this.mode.stop();
+			return true;
+		}
+		return false;
+	}
+	
 	//######################################################################################################################
 	//### Rover Modes ######################################################################################################
 	//######################################################################################################################
@@ -242,27 +254,17 @@ public class Rover {
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public Point[] explore() {
+	public void explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
 		
-		nav.rotateTo(-90);
-		Point[] samples = sp_sensor.scan(180, false);
-		if(samples[0].x==-1000) {
-			this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
-			this.logger.println("ending exploration mode");
-			this.mode.stop();
-			return samples;
-		}
+		Pose[] wp = {new Pose(0,0,-90),new Pose(200,60,90)};
+		int i = 0;
 		
-		nav.rotateTo(0);
-		nav.goTo(200, 60);
-		nav.rotateTo(90);
-		samples = sp_sensor.scan(180, false);
-		this.logger.println("x,y: " + samples[0].x + "," + samples[0].y);
-		this.logger.println("ending exploration mode");
-		this.mode.stop();
-		return samples;
+		while(!scanFromPoint(wp[i],180) && i<wp.length) {
+			nav.goTo(wp[i].getX(),wp[i].getY());
+			i++;
+		}
 		
 		//System.out.println("  -> press any key to end exploration");
 		//Button.waitForAnyPress();
