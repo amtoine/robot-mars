@@ -123,21 +123,26 @@ public class Rover {
 	 * is called. If the voltage drops below a certain threshold, the rover will enter the error mode.
 	 */
 	public void checkBattery() {
+		this.logger.println("checking batteries");
+		this.mode.enter_diagnostic_mode();
 		// measure the battery voltage level.
 		int bv = Battery.getVoltageMilliVolt();
 		
 		// compute voltages slices for enhanced display and log.
 		int bat = bv/1000;
-		if      (bat == 8) 	{ this.logger.println("battery is full");        Blinker.blink(Blinker.GREEN,  Blinker.STILL); }
-		else if (bat == 7) 	{ this.logger.println("battery is almost full"); Blinker.blink(Blinker.GREEN,  Blinker.SLOW); }
-		else if (bat == 6) 	{ this.logger.println("battery is very good");   Blinker.blink(Blinker.GREEN,  Blinker.FAST); }
-		else if (bat == 5) 	{ this.logger.println("battery is good");        Blinker.blink(Blinker.ORANGE, Blinker.STILL); }
-		else if (bat == 4) 	{ this.logger.println("battery is half");        Blinker.blink(Blinker.ORANGE, Blinker.SLOW); }
-		else if (bat == 3) 	{ this.logger.println("battery is fine");        Blinker.blink(Blinker.ORANGE, Blinker.FAST); }
-		else if (bat == 2) 	{ this.logger.println("battery is low");         Blinker.blink(Blinker.RED,    Blinker.STILL); }
-		else if (bat == 1) 	{ this.logger.println("battery is very low");    Blinker.blink(Blinker.RED,    Blinker.SLOW); }
-		else if (bat == 0) 	{ this.logger.println("battery is critical");    Blinker.blink(Blinker.RED,    Blinker.FAST); }
-		this.logger.println("with " + bv);
+		if      (bat == 8) 	{ this.logger.print("battery is full");        Blinker.blink(Blinker.GREEN,  Blinker.STILL); }
+		else if (bat == 7) 	{ this.logger.print("battery is almost full"); Blinker.blink(Blinker.GREEN,  Blinker.SLOW); }
+		else if (bat == 6) 	{ this.logger.print("battery is very good");   Blinker.blink(Blinker.GREEN,  Blinker.FAST); }
+		else if (bat == 5) 	{ this.logger.print("battery is good");        Blinker.blink(Blinker.ORANGE, Blinker.STILL); }
+		else if (bat == 4) 	{ this.logger.print("battery is half");        Blinker.blink(Blinker.ORANGE, Blinker.SLOW); }
+		else if (bat == 3) 	{ this.logger.print("battery is fine");        Blinker.blink(Blinker.ORANGE, Blinker.FAST); }
+		else if (bat == 2) 	{ this.logger.print("battery is low");         Blinker.blink(Blinker.RED,    Blinker.STILL); }
+		else if (bat == 1) 	{ this.logger.print("battery is very low");    Blinker.blink(Blinker.RED,    Blinker.SLOW); }
+		else if (bat == 0) 	{ this.logger.print("battery is critical");    Blinker.blink(Blinker.RED,    Blinker.FAST); }
+		this.logger.println("with " + bv + " mV");
+		
+		this.mode.stop();
+		this.logger.println("battery checked");
 		
 		Button.waitForAnyPress(5000);
 		// throw error if the battery is too low.
