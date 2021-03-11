@@ -405,11 +405,7 @@ public class Rover {
 		
 		while (this.current_wp < Rover.path.length && !harvest_needed) {
 			// compute the direction from current position to the next checkpoint
-//>>>>>>>>>> CLAIRE
-			direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
-//>>>>>>>>>>
-//			direction = Rover.path[this.current_wp].getLocation().subtract(this.nav.getPose().getLocation());
-//>>>>>>>>>> ANTOINE
+			direction = Rover.path[this.current_wp].getLocation().subtract(this.nav.getPose().getLocation());
 			// the angle of rotation is equal to the angle of the vector 'direction', modulus the current heading.
 			angle = (int) (180/Math.PI * direction.angle());
 			
@@ -422,31 +418,14 @@ public class Rover {
 					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
-//>>>>>>>>>> CLAIRE
-						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
-							j_obst_updated++;
-							this.j_obst++;
-						}
-						this.visits[this.j_obst]++;
-						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(
-								this.visits[this.j_obst]-1).add(detected_obj).multiply(
-										1/this.visits[this.j_obst]);
-						harvest_needed = d<Rover.MIN_DIST_DETECTION || j_obst_updated>1;
-//>>>>>>>>>>
-//						this.j_obst++;
-//						return detected_obj;
-//>>>>>>>>>> ANTOINE
-						
-//>>>>>>>>>> CLAIRE
-					} else {
-						harvest_needed = j_obst_updated>=1;
+						this.j_obst++;
+//>>>>>>>>>>>>> ANTOINE
+//>>>>>>>>>>>>>			
+//						this.nav.setup_travel(0);
+//>>>>>>>>>>>>> CLAIRE						
+						return detected_obj;
 					}
-				} else {
-					harvest_needed = j_obst_updated>=1;
 				}
-//>>>>>>>>>>
-//>>>>>>>>>> ANTOINE
 			}
 			this.nav.compute_new_heading();
 			this.logger.println("rotated pose: " +	this.nav.getPose().getX() + ", " +
@@ -464,29 +443,14 @@ public class Rover {
 						// ...inside the map.
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
-//>>>>>>>>>> CLAIRE
-						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
-							j_obst_updated++;
-							this.j_obst++;
-						}
-						this.visits[this.j_obst]++;
-						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(this.visits[this.j_obst]-1).add(detected_obj).multiply(1/this.visits[this.j_obst]);
-						harvest_needed = d<Rover.MIN_DIST_DETECTION || j_obst_updated>1;
-//>>>>>>>>>>
-//						this.j_obst++;
-//						return detected_obj;
-//>>>>>>>>>> ANTOINE
-						
-//>>>>>>>>>> CLAIRE
-					} else {
-						harvest_needed = j_obst_updated>=1;
+						this.j_obst++;
+//>>>>>>>>>>>>> ANTOINE
+//>>>>>>>>>>>>>			
+//						this.nav.setup_travel(0);
+//>>>>>>>>>>>>> CLAIRE	
+						return detected_obj;
 					}
-				} else {
-					harvest_needed = j_obst_updated>=1;
 				}
-//>>>>>>>>>>
-//>>>>>>>>>> ANTOINE
 			}
 			this.nav.compute_new_location();
 			this.logger.println("travelled pose: " +	this.nav.getPose().getX() + ", " +
@@ -499,13 +463,8 @@ public class Rover {
 
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
-		
-		//>>>>>>>>>> CLAIRE
-		return this.obstacles[this.j_obst];
-//>>>>>>>>>>
-//		this.j_obst = 2;
-//		return null;
-//>>>>>>>>>> ANTOINE
+		this.j_obst = 2;
+		return null;
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
@@ -600,7 +559,13 @@ public class Rover {
 			this.nav.travel(direction.length() - RecupZone.diameter);
 			// release the sample.
 			this.pliers.release();
+			
+//>>>>>>>>>>>>> ANTOINE
 			this.nav.travel(50  /1000); // got back to give margin.
+//>>>>>>>>>>>>>
+//			this.nav.travel(-50 /1000);
+//>>>>>>>>>>>>> CLAIRE
+			
 			this.pliers.grab(); // go to previous pliers state.
 		} else {
 			this.logger.println("no sample to fetch");
@@ -617,7 +582,20 @@ public class Rover {
 	 * @return true if the mission is done, i.e. two samples have been fetched, false otherwise.
 	 */
 	public boolean mission_done() {
+//>>>>>>>>>>>>> ANTOINE
 		return this.j_obst == 2;
+//>>>>>>>>>>>>>
+//		if(this.j_obst >= 1){
+//			// Mission finished so returns to starting zone
+//			Point direction = new Point(0.25f,0.75f).subtract(this.nav.getPose().getLocation());
+//			int angle = (int) (180/Math.PI * direction.angle());
+//			this.nav.rotate(this.nav.getPose().getHeading() - angle);
+//			this.nav.setup_travel(direction.length());
+//			return true;
+//		} else {
+//			return false;
+//		}
+//>>>>>>>>>>>>> CLAIRE
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________ (blocking method).
