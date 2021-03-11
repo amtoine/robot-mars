@@ -70,23 +70,19 @@ public class Rover {
 	private static final int VOLTAGE_THRESHOLD = 900;
 	
 	// position of the ultrasonic sensor w.r.t. the center of rotation of the rover.
-	static final int   ULTRA_Dx    = 0;
-	static final int   ULTRA_Dy    = 0;
+	static final int   ULTRA_Dx    = 70;
+	static final int   ULTRA_Dy    = 70;
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
 	
 	// position of the pliers w.r.t. the center of rotation of the rover.
-	static final int   PLIERS_Dx    = 0;
-	static final int   PLIERS_Dy    = 0;
-	static final float PLIERS_R2    = PLIERS_Dx*PLIERS_Dx + PLIERS_Dy*PLIERS_Dy;
-	static final float PLIERS_R     = (float)Math.sqrt(PLIERS_R2);
-	static final float PLIERS_THETA = (float)Math.atan2(PLIERS_Dy, PLIERS_Dx);
+	static final int   PLIERS_Dx    = 100;
 	
 	/** A map of the whole intervention zone. */
 	static final MapZone map = new Map();
 	/** A map of the recuperation zone which is a subset of the intervention zone. */
-	static final MapZone recup_zone = new RecupZone();
+	static final RecupZone recup_zone = new RecupZone();
 	/** The maximum object size in the zone.
 	 * If two objects are away from more than this threshold, they have to be part of two distinct objetcs. */
 	static final double MAX_OBJECT_SIZE = 0.3;
@@ -390,18 +386,12 @@ public class Rover {
 		Point direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
 		// the angle of rotation is equal to the angle of the vector 'direction', modulus pi/2.
 		int angle = (int) (180/Math.PI * direction.angle());
-		this.nav.rotate(this.nav.getPose().getHeading() - angle);
-		this.nav.travel(direction.length()/1000);
+		this.nav.rotate(angle - this.nav.getPose().getHeading());
+		this.nav.travel(direction.length()*1000);
 		
 		this.logger.println("X:" +	this.nav.getPose().getX() + " " + 
 							"Y:" +	this.nav.getPose().getY() + " " +
 							"H:" + 	this.nav.getPose().getHeading());
-		
-//		this.nav.rotate(90);
-//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getX()-Rover.margin);
-//		this.nav.rotate(-90);
-//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getY());
-//		this.nav.rotate(-90);
 		
 		float d;
 		Point detected_obj;
@@ -409,7 +399,6 @@ public class Rover {
 		Point obstacles[] = new Point[19];
 		int visits[] = new int[19];
 		for (int i = 0; i < obstacles.length; i++) {
-//			obstacles[i] = new Point(Float.MAX_VALUE, Float.MAX_VALUE);
 			obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
 		}
 		int j = 0;
@@ -453,28 +442,20 @@ public class Rover {
                     								this.nav.getPose().getHeading());
 		}
 
-//		Point[] res = this.scan();
-//		this.logger.println("res: " + Arrays.deepToString(res));
-//		
-//		for (int i = 0; i < res.length; i++) {
-//			Beeper.beep(3, 50);
-//			Button.waitForAnyPress();
-//			this.nav.goTo(res[i]);
-//		}
-
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public void harvest(Point sample) {
+	public void harvest(Point sample, float  dist) {
 		this.logger.println("starting harvest mode");
 		this.mode.enter_harvest_mode();
 		
 		float factor = 0.9f;
 		boolean approach = true;
-		float distance = this.nav.getPose().getLocation().subtract(sample).length();
+		float distance = dist;
+		float prev_distance = distance;
 
 		// an array containing a set of relative angles to check where the sample is 
 		int check_precision = 10;
@@ -490,7 +471,7 @@ public class Rover {
 		// other +10 rotations.
 		
 		while (approach) {
-			if (distance >= Double.MAX_VALUE) {
+			if (distance >= Float.MAX_VALUE) {
 				// rover lost the sample.
 				// it could be a bit to the right or a bit to the left, let's check both.
 				Point check_obj;
@@ -498,7 +479,7 @@ public class Rover {
 				for (int i = 0; i < check_relative_angles.length; i++) {
 					this.nav.rotate(check_relative_angles[i]); // rotate to the current checking angle.
 					distance = this.nav.getPose().getLocation().subtract(sample).length(); // get the distance.
-					if (distance < Double.MAX_VALUE) { // there is something...
+					if (distance < Float.MAX_VALUE) { // there is something...
 						check_obj = this.point_from_ultra(distance); // compute location.
 						if (Rover.map.inside(check_obj) && !Rover.recup_zone.inside(check_obj)) {
 							// ...inside the zone.
@@ -517,13 +498,45 @@ public class Rover {
 					// because check_relative_angles[nb_check_on_one_side] is, in the example above, the +40, so that
 					// -check_relative_angles[nb_check_on_one_side]+check_precision is -30 which is exactly what is needed
 					// to go back to starting heading.
+					distance = Float.MAX_VALUE;
+					// it is possible to detect something outside the zone, but we do not want to take it into account.
 				}
 			}
-			this.nav.travel(factor*distance); // travel 90% of the distance to the sample.
-			distance = this.nav.getPose().getLocation().subtract(sample).length(); // get the new distance to the sample.
+			if (distance < Double.MAX_VALUE) {	
+				prev_distance = distance; // backup of the distance.
+				this.nav.travel(factor*distance); // travel 90% of the distance to the sample.
+				distance = this.nav.getPose().getLocation().subtract(sample).length(); // new distance to the sample.
+			}
 		}
 		
+		// now, the rover is just in front the sample, or its ghost...
+		// let us correct the distance to the sample.
+		distance = factor*prev_distance;
+		Point sample_to_grab = this.point_from_ultra(distance);
+		// rotate by the angle between the axis of the rover and the vector pointing towards the sample.
+		this.nav.rotate(Math.atan2(Rover.ULTRA_Dy, Rover.ULTRA_Dx+distance));
 		
+		// make sure the pliers are open.
+		this.pliers.release();
+		// approach the sample.
+		this.nav.travel(sample_to_grab.subtract(
+				this.nav.getPose().getLocation().pointAt(
+						Rover.PLIERS_Dx, this.nav.getPose().getHeading())).length()*1000);
+		// grab the sample.
+		this.pliers.grab();
+		
+		// now that the rover has the sample in its pliers, simply go to the sample zone.
+		// point towards the recup zone.
+		Point direction = RecupZone.center.subtract(
+				this.nav.getPose().getLocation().pointAt(
+						Rover.PLIERS_Dx, this.nav.getPose().getHeading()));
+		this.nav.rotate(direction.angle()*180/Math.PI - this.nav.getPose().getHeading());
+		// travel the distance.
+		this.nav.travel(direction.length()*1000 - RecupZone.diameter*1000);
+		// release the sample.
+		this.pliers.release();
+		this.nav.travel(50); // got back to give margin.
+		this.pliers.grab(); // go to previous pliers state.
 		
 		this.logger.println("ending harvest mode");
 		this.mode.stop();		
