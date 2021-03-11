@@ -53,11 +53,13 @@ public class Rover {
 	static final int  margin = 50;
 	/** A path of points on the zone. */
 	static final Pose path[] = new Pose[1500/x*2];
-	/** A list of obstacles detected */
-	Point[] obstacles = new Point[20];
 	/** Index of the last treated waypoint in exploration mode*/
 	int current_wp;
-	/** Index of last treated obstacle*/
+	/** A list of obstacles detected */
+	Point[] obstacles;
+	/** A list of the number of times an obstacle was detected*/
+	int visits[];
+	/** Index of last detected obstacle*/
 	int j_obst;
 	
 	/**	The length of one side of the landing zone. */
@@ -107,9 +109,11 @@ public class Rover {
 		
 		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
 		
+		this.obstacles = new Point[20];
 		for (int i = 0; i < this.obstacles.length; i++) {
 			this.obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
 		}
+		this.visits = new int[20];
 		this.current_wp = 0;
 		this.j_obst = 0;
 	}
@@ -127,9 +131,11 @@ public class Rover {
 		
 		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
 		
+		this.obstacles = new Point[20];
 		for (int i = 0; i < this.obstacles.length; i++) {
 			this.obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
 		}
+		this.visits = new int[20];
 		this.current_wp = 0;
 		this.j_obst = 0;
 }
@@ -413,9 +419,9 @@ public class Rover {
 		int angle;
 		float d;
 		Point detected_obj;
+		int j_obst_updated = 0;
 		
 		//Point obstacles[] = new Point[19];
-		int visits[] = new int[20];
 		boolean harvest_needed = false;
 		
 		while (this.current_wp < Rover.path.length && !harvest_needed) {
@@ -434,15 +440,18 @@ public class Rover {
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
 						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
+							j_obst_updated++;
 							this.j_obst++;
 						}
-						visits[this.j_obst]++;
+						this.visits[this.j_obst]++;
 						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(visits[this.j_obst]-1).add(detected_obj).multiply(1/visits[this.j_obst]);
-						if(d<Rover.MIN_DIST_DETECTION) {
-							harvest_needed = true;
-						}
+						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(this.visits[this.j_obst]-1).add(detected_obj).multiply(1/this.visits[this.j_obst]);
+						harvest_needed = d<Rover.MIN_DIST_DETECTION || j_obst_updated>1;
+					} else {
+						harvest_needed = j_obst_updated>=1;
 					}
+				} else {
+					harvest_needed = j_obst_updated>=1;
 				}
 			}
 			this.nav.compute_new_heading();
@@ -461,15 +470,18 @@ public class Rover {
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
 						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
+							j_obst_updated++;
 							this.j_obst++;
 						}
-						visits[this.j_obst]++;
+						this.visits[this.j_obst]++;
 						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(visits[this.j_obst]-1).add(detected_obj).multiply(1/visits[this.j_obst]);
-						if(d<Rover.MIN_DIST_DETECTION) {
-							harvest_needed = true;
-						}
+						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(this.visits[this.j_obst]-1).add(detected_obj).multiply(1/this.visits[this.j_obst]);
+						harvest_needed = d<Rover.MIN_DIST_DETECTION || j_obst_updated>1;
+					} else {
+						harvest_needed = j_obst_updated>=1;
 					}
+				} else {
+					harvest_needed = j_obst_updated>=1;
 				}
 			}
 			this.nav.compute_new_location();
