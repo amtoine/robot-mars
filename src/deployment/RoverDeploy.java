@@ -31,7 +31,7 @@ public class RoverDeploy {
 		rover.compute_path();
 //		rover.calibrate_origin();
 		
-		int nb_missions = 3;
+		int nb_missions = 0;
 		for (int i = 0; i < nb_missions; i++) {
 			while (!rover.mission_done()) {
 				rover.harvest(rover.explore());
@@ -52,5 +52,6 @@ public class RoverDeploy {
 		
 		rover.test_travel_antoine();
 		rover.test_rotate_antoine();
+		rover.test_grabber_antoine();
 	}
 }
