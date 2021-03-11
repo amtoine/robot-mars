@@ -195,6 +195,14 @@ public class Navigator {
 		this.pose.setLocation(this.pose.getLocation().pointAt(length/1000, this.pose.getHeading()));
 	}
 	/**
+	 * Wrapper of the {@link Navigator}{@link #travel(float)} method.
+	 * 
+	 * @param angle the relative distance, in mm.
+	 */
+	public void travel(double length) {
+		this.travel((float)length);
+	}
+	/**
 	 * The rover travels a certain distance.
 	 * During the process, the location of the rover is updated.
 	 * 
