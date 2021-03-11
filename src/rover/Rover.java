@@ -45,9 +45,17 @@ public class Rover {
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
 	
+	/** The width of the ultrasonic sensor's cone. */
 	static final int  x      = 170;
+	/**	The length of the travels during calibration time, in mm. */
+	static final int  search_length = 500;
+	/** A margin all around the zone to avoid going out, in mm. */
 	static final int  margin = 50;
+	/** A closed path of points on the zone. */
 	static final Pose path[] = new Pose[1500/x];
+	
+	/**	The length of one side of the landing zone. */
+	static final int land_zone_side = 500;
 	
 	
 	/** The diameter of the wheels, expressed in mm. */
@@ -60,13 +68,20 @@ public class Rover {
 	static final float HALF_AXIS_DIFF = Rover.AXIS_DIFF/2;
 	/** As the battery is full with 9000mV, we assume that the situation is critical below 10%, i.e. 900mV*/
 	private static final int VOLTAGE_THRESHOLD = 900;
-
+	
 	// position of the ultrasonic sensor w.r.t. the center of rotation of the rover.
 	static final int   ULTRA_Dx    = 0;
 	static final int   ULTRA_Dy    = 0;
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
+	
+	// position of the pliers w.r.t. the center of rotation of the rover.
+	static final int   PLIERS_Dx    = 0;
+	static final int   PLIERS_Dy    = 0;
+	static final float PLIERS_R2    = PLIERS_Dx*PLIERS_Dx + PLIERS_Dy*PLIERS_Dy;
+	static final float PLIERS_R     = (float)Math.sqrt(PLIERS_R2);
+	static final float PLIERS_THETA = (float)Math.atan2(PLIERS_Dy, PLIERS_Dx);
 	
 	/** A map of the whole intervention zone. */
 	static final MapZone map = new Map();
@@ -79,7 +94,7 @@ public class Rover {
 	// private default constructor.
 	private Rover() {
 		this.logger = new Logger();
-		this.mode = new RoverMode();
+		this.mode   = new RoverMode();
 		
 		this.ultra  = new UltraEyes(SensorPort.S4);
 		this.color  = new ColorEye(SensorPort.S1);
@@ -93,7 +108,7 @@ public class Rover {
 	private Rover(Port ultrasonic_port, Port color_port,
 			      Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
 		this.logger = new Logger();
-		this.mode = new RoverMode();
+		this.mode   = new RoverMode();
 		
 		this.ultra  = new UltraEyes(ultrasonic_port);
 		this.color  = new ColorEye(color_port);
@@ -226,14 +241,54 @@ public class Rover {
 		if (error != 0) { this.error(); }	
 	}
 	
-	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
-		if(relative) {
-			p.x = (p.x-rover_pose.getX());
-			p.y = (p.y-rover_pose.getY());
+	/**
+	 * Calibrate the position of the rover in the zone by looking for the borders of the black square.
+	 * we assume that the X-axis is aligned with the length of the zone.
+	 */
+	public void calibrate_origin() {
+		float color; // the color under the sensor.
+		
+		// first the rover moves along X-axis and waits for white floor.
+		this.nav.setup_travel(Rover.search_length);
+		color = -1;
+		while (this.nav.isMoving() && color < ColorEye.threshold) { // white is > 0.5 and black is < 0.5
+			color = this.color.read().getValue(); // update the color value.
+			Thread.yield();
 		}
-		return p;
+		if (color < 0.5) { this.error(); } else { Beeper.beep(); } // color stays below 0.5 if something fatal occurred.
+		
+		this.nav.getPose().setLocation(0.5f, this.nav.getPose().getY()); // update the x coordinate.
+		this.nav.travel(-Rover.margin); // give a little margin to search along y axis.
+		
+		this.nav.rotate(90); // rotate left to search white along the y axis.
+		
+		// same remarks
+		this.nav.setup_travel(Rover.search_length);
+		color = -1;
+		while (this.nav.isMoving() && color < ColorEye.threshold) {
+			color = this.color.read().getValue();
+			Thread.yield();
+		}
+		if (color == -1) { this.error(); } else { Beeper.beep(); }
+		
+		this.nav.getPose().setLocation(this.nav.getPose().getX(), 0.5f); // update the y coordinate.
+		
+		// location should be accurate.
 	}
 	
+//	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
+//		if(relative) {
+//			p.x = (p.x-rover_pose.getX());
+//			p.y = (p.y-rover_pose.getY());
+//		}
+//		return p;
+//	}
+	
+	/**
+	 * 
+	 * @return an array of detected obstacles
+	 * @deprecated localisation process changed.
+	 */
 	Point[] scan() {
 		float angles[] = new float[19];
 		float dists[] = new float[19];
@@ -334,32 +389,61 @@ public class Rover {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
 		
-		this.pliers.grab();
+		// align with first checkpoint.
+		//	compute the direction from current position to the first checkpoint.
+		Point direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
+		// the angle of rotation is equal to the angle of the vector 'direction', modulus pi/2.
+		int angle = (int) (180/Math.PI * direction.angle());
+		this.nav.rotate(90 - angle);
+		// align with x axis.
+		this.nav.rotateTo(0);
+		
+		this.logger.println("X:" +	this.nav.getPose().getX() + " " + 
+							"Y:" +	this.nav.getPose().getY() + " " +
+							"H:" + 	this.nav.getPose().getHeading());
+		
+//		this.nav.rotate(90);
+//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getX()-Rover.margin);
+//		this.nav.rotate(-90);
+//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getY());
+//		this.nav.rotate(-90);
+		
+		float d;
+		Point detected_obj;
 		
 		
-		this.nav.goTo(Rover.path[0]);
-		for (int i = 0; i < Rover.path.length; i++) {
-			this.nav.setup_travel((i%2 == 0)? Map.length*1000-2*Rover.x : 2*Rover.x);
+		for (int i = 1; i < Rover.path.length; i++) {
+			this.nav.setup_travel((i%2 == 0)? Map.length*1000-2*Rover.x : 2*Rover.x); // start to move towards next point.
 			while (this.nav.isMoving()) {
-				float d = this.ultra.read().getValue();
+				d = this.ultra.read().getValue(); // look at obstacles.
 				if (d < Double.MAX_VALUE) {
-					System.out.println("d: " + d);
-					//TODO compute measure location
+					detected_obj = this.nav.getPose().pointAt(d, this.nav.getPose().getHeading());
+					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
+						this.logger.println("d: " + d);
+						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
+					}
 				}
 			}
-			this.nav.compute_new_position();
+			this.nav.compute_new_location();
 
-			this.logger.println("pose travel: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+			this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
+			                                      	this.nav.getPose().getY() + ", " +
+			                                      	this.nav.getPose().getHeading());
 			this.nav.setup_rotate(((i%4 == 1) || (i%4 == 2))? -90 : 90);
 			while (this.nav.isMoving()) {
-				float d = this.ultra.read().getValue();
+				d = this.ultra.read().getValue();
 				if (d < Double.MAX_VALUE) {
-					System.out.println("d: " + d);
-					//TODO compute measure location
+					detected_obj = this.nav.getPose().pointAt(d, this.nav.getPose().getHeading());
+					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
+						this.logger.println("d: " + d);
+						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
+					}
 				}
 			}
 			this.nav.compute_new_heading();
-			this.logger.println("pose rotate: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+			this.logger.println("pose rotate: " + 	this.nav.getPose().getX() + ", " +
+                    								this.nav.getPose().getY() + ", " +
+                    								this.nav.getPose().getHeading());
 		}
 
 //		Point[] res = this.scan();
@@ -421,13 +505,19 @@ public class Rover {
 		System.exit(1);
 	}
 
-	//######################################################################################################################
-	//### Setters and Getters ##############################################################################################
-	//######################################################################################################################
+	//###################################################################################################################
+	//### Setters and Getters ###########################################################################################
+	//###################################################################################################################
 	
-	//######################################################################################################################
-	//### Take Measures ####################################################################################################
-	//######################################################################################################################
+	//###################################################################################################################
+	//### Take Measures #################################################################################################
+	//###################################################################################################################
+	
+	//###################################################################################################################
+	//###################################################################################################################
+	//### Tests #########################################################################################################
+	//###################################################################################################################
+	//###################################################################################################################
 	
 	//###################################################################################################################
 	//### sensors tests #################################################################################################
@@ -508,12 +598,14 @@ public class Rover {
 	}
 	
 	//###################################################################################################################
-	//### navigator tests ###############################################################################################
+	//### Navigator tests ###############################################################################################
 	//###################################################################################################################
 	/** */
 	public void test_navigator() {
 		Pose pose = this.nav.getPose();
-		this.logger.println("("+pose.getX()+","+pose.getY()+") at "+pose.getHeading() + " & " + this.right.device.getTachoCount());
+		this.logger.println("pose before: " +	pose.getX() + ", " +
+												pose.getY() + ", " +
+												this.right.device.getTachoCount());
 		
 		this.logger.println("goTo");
 		this.nav.goTo(new Waypoint(pose.pointAt(100, pose.getHeading()+90)));
@@ -551,15 +643,19 @@ public class Rover {
 	}
 
 	public void test_navigator_sweep_antoine() {
-		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		this.logger.println("pose before: " +	this.nav.getPose().getX() + ", " +
+              									this.nav.getPose().getY() + ", " +
+              									this.nav.getPose().getHeading());
 		Button.waitForAnyPress();
 		this.nav.setup_travel(200);
 		while (this.nav.isMoving()) {
 			Beeper.beep();
 			System.out.println(this.ultra.read().getValue());
 		}
-		this.nav.compute_new_position();
-		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		this.nav.compute_new_location();
+		this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
+          										this.nav.getPose().getY() + ", " +
+          										this.nav.getPose().getHeading());
 		Button.waitForAnyPress();
 		
 		this.logger.println("pose before: "+this.nav.getPose().toString());
@@ -569,7 +665,24 @@ public class Rover {
 			Beeper.beep();
 		}
 		this.nav.compute_new_heading();
-		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
+              									this.nav.getPose().getY() + ", " +
+              									this.nav.getPose().getHeading());
 		Button.waitForAnyPress();
+	}
+	
+	public void test_travel_antoine() {
+		while (Button.readButtons() != Button.ID_ENTER) {
+			this.nav.travel(500);
+			Button.waitForAnyPress();
+		}
+	}
+	
+	public void test_rotate_antoine() {
+		
+		while (Button.readButtons() != Button.ID_ENTER) {
+			this.nav.rotate(90);
+			Button.waitForAnyPress();
+		}
 	}
 }

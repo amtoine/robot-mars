@@ -15,6 +15,8 @@ class ColorEye extends Peripheral {
 	/** Precision about the Device of a ColorEye. Here, it is an EV3ColorSensor. */
 	EV3ColorSensor device;
 	
+	static final float threshold = 0.5f;
+	
 	/**
 	 * One can initialize a ColorEye by giving it a port.
 	 * 

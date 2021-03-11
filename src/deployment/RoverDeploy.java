@@ -29,8 +29,9 @@ public class RoverDeploy {
 		rover.checkBattery();
 		rover.connect_peripherals();
 		rover.compute_path();
+		rover.calibrate_origin();
 		
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
+//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
 		
@@ -42,6 +43,9 @@ public class RoverDeploy {
 //		rover.test_motors();
 //		rover.test_navigator();
 //		rover.test_navigator_square_antoine();
-		rover.test_navigator_sweep_antoine();
+//		rover.test_navigator_sweep_antoine();
+		
+		rover.test_travel_antoine();
+		rover.test_rotate_antoine();
 	}
 }
