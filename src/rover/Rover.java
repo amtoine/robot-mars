@@ -45,10 +45,19 @@ public class Rover {
 	/** The navigator controlling the rover's movement inside the intervention zone. */
 	Navigator nav;
 	
+	static final int  x      = 170;
+	static final int  margin = 50;
+	static final Pose path[] = new Pose[1500/x];
+	
+	
 	/** The diameter of the wheels, expressed in mm. */
-	static final int WHEEL_RADIUS = 56/2;
-	/** The half distance between the two axis of the tracks, expressed in mm. */
-	static final int HALF_WIDTH = 138/2;
+	static final float WHEEL_DIAMETER = 55;
+	/** The radius of the wheels, expressed in mm. */
+	static final float WHEEL_RADIUS   = Rover.WHEEL_DIAMETER/2;
+	/** The distance between the two axis of the wheels, expressed in mm. */
+	static final float AXIS_DIFF      = 107;
+	/** The half distance between the two axis of the wheels, expressed in mm. */
+	static final float HALF_AXIS_DIFF = Rover.AXIS_DIFF/2;
 	/** As the battery is full with 9000mV, we assume that the situation is critical below 10%, i.e. 900mV*/
 	private static final int VOLTAGE_THRESHOLD = 900;
 
@@ -293,7 +302,16 @@ public class Rover {
 		}
 		return result;
 	}
-	
+
+	public void compute_path() {
+		for (int i = 0; i < Rover.path.length; i++) {
+			float x = ((i%4 == 0) || (i%4 == 3))? Rover.x : Map.length*1000-Rover.x;
+			float y = Rover.x+2*Rover.x*(int)(i/2);
+			float angle = (i%2 == 1)? -90 : ((i%4 == 0)? 0 : -180);
+			path[i] = new Pose(x/1000, y/1000, angle);
+			this.logger.println("p["+i+"]: "+path[i]);
+		}
+	}
 	//######################################################################################################################
 	//### Rover Modes ######################################################################################################
 	//######################################################################################################################
@@ -317,15 +335,41 @@ public class Rover {
 		this.mode.enter_exploration_mode();
 		
 		this.pliers.grab();
-
-		Point[] res = this.scan();
-		this.logger.println("res: " + Arrays.deepToString(res));
 		
-		for (int i = 0; i < res.length; i++) {
-			Beeper.beep(3, 50);
-			Button.waitForAnyPress();
-			this.nav.goTo(res[i]);
+		
+		this.nav.goTo(Rover.path[0]);
+		for (int i = 0; i < Rover.path.length; i++) {
+			this.nav.setup_travel((i%2 == 0)? Map.length*1000-2*Rover.x : 2*Rover.x);
+			while (this.nav.isMoving()) {
+				float d = this.ultra.read().getValue();
+				if (d < Double.MAX_VALUE) {
+					System.out.println("d: " + d);
+					//TODO compute measure location
+				}
+			}
+			this.nav.compute_new_position();
+
+			this.logger.println("pose travel: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+			this.nav.setup_rotate(((i%4 == 1) || (i%4 == 2))? -90 : 90);
+			while (this.nav.isMoving()) {
+				float d = this.ultra.read().getValue();
+				if (d < Double.MAX_VALUE) {
+					System.out.println("d: " + d);
+					//TODO compute measure location
+				}
+			}
+			this.nav.compute_new_heading();
+			this.logger.println("pose rotate: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
 		}
+
+//		Point[] res = this.scan();
+//		this.logger.println("res: " + Arrays.deepToString(res));
+//		
+//		for (int i = 0; i < res.length; i++) {
+//			Beeper.beep(3, 50);
+//			Button.waitForAnyPress();
+//			this.nav.goTo(res[i]);
+//		}
 
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
@@ -481,38 +525,51 @@ public class Rover {
 	}
 	
 	public void test_navigator_square_antoine() {
-		for (int i = 0; i < 4; i++) {
-			this.nav.travel(20);
+		for (int i = 0; i < 0; i++) {
+			this.logger.println("travel");
+			this.nav.travel(200);
+			this.logger.println("rotate");
 			this.nav.rotate(90);
 		}
 		
+		this.logger.println("pose: " + this.nav.getPose());
+		Button.waitForAnyPress();
+		
 		Point waypoints[] = new Point[4];
 		waypoints[0] = MapZone.initial_pose.getLocation();
-		Point dir = new Point(20, 0);
+		Point dir = new Point(200, 0);
 		for (int i = 1; i < waypoints.length; i++) {
 			waypoints[i] = waypoints[i-1].add(dir);
 			dir = dir.leftOrth();
 		}
 		
 		for (int i = 0; i < 4; i++) {
+			this.logger.println(waypoints[i].toString());
 			this.nav.goTo(waypoints[i]);
 			this.nav.rotate(90);
 		}
 	}
 
 	public void test_navigator_sweep_antoine() {
+		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		Button.waitForAnyPress();
+		this.nav.setup_travel(200);
+		while (this.nav.isMoving()) {
+			Beeper.beep();
+			System.out.println(this.ultra.read().getValue());
+		}
+		this.nav.compute_new_position();
+		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		Button.waitForAnyPress();
+		
 		this.logger.println("pose before: "+this.nav.getPose().toString());
-		this.nav.travel(40, true);
-		this.nav.getLeft().device.resetTachoCount();
-		this.nav.getRight().device.resetTachoCount();
+		this.nav.setup_rotate(90);
 		while (this.nav.isMoving()) {
 			System.out.println(this.ultra.read().getValue());
 			Beeper.beep();
 		}
-		int l_tacho = this.nav.getLeft().device.getTachoCount();
-		int r_tacho = this.nav.getRight().device.getTachoCount();
-		float dist = Rover.WHEEL_RADIUS*(l_tacho+r_tacho)/2;
-		this.nav.add_dist(dist);
-		this.logger.println("pose after: "+this.nav.getPose().toString());
+		this.nav.compute_new_heading();
+		this.logger.println("pose before: "+this.nav.getPose().getX() + ", "+ this.nav.getPose().getY() + ", "+ this.nav.getPose().getHeading());
+		Button.waitForAnyPress();
 	}
 }

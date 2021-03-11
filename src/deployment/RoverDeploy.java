@@ -19,7 +19,7 @@ public class RoverDeploy {
 	 * @param args java arguments for main methods.
 	 */
 	public static void main(String[] args) {
-		Sound.setVolume(5);
+		Sound.setVolume(1);
 		//###################################################################################################################
 		//### full mission simulation #######################################################################################
 		//###################################################################################################################
@@ -28,8 +28,9 @@ public class RoverDeploy {
 		rover.land();
 		rover.checkBattery();
 		rover.connect_peripherals();
+		rover.compute_path();
 		
-//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
+		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
 //		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
 		
@@ -40,7 +41,7 @@ public class RoverDeploy {
 //		rover.test_color_sensor();
 //		rover.test_motors();
 //		rover.test_navigator();
-		rover.test_navigator_square_antoine();
+//		rover.test_navigator_square_antoine();
 		rover.test_navigator_sweep_antoine();
 	}
 }

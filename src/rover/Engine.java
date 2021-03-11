@@ -13,8 +13,8 @@ import tools.Order;
  *
  */
 class Engine extends Peripheral {
-	private static final int speed = 10;
-	private static final int acceleration = 10;
+	private static final int speed = 150;
+	private static final int acceleration = 150;
 	
 	/** Precision about the Device of an Engine. Here, it is a RegulatedMotor. */
 	RegulatedMotor device;
