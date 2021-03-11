@@ -14,7 +14,7 @@ import lejos.robotics.navigation.Pose;
  */
 
 abstract class MapZone {
-	static final Pose initial_pose = new Pose((float) 0.25,(float) 0.75,0); //in absolute frame
+	static final Pose initial_pose = new Pose(0.25f, 0.75f, 0); //in absolute frame
 	Point center;
 	
 	abstract boolean inside(Point p);
