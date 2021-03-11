@@ -10,8 +10,8 @@ class Grabber {
 	
 	Grabber(Port port){
 		this.motor = new Engine(port);
-		this.motor_speed = 90;
-		this.pliers_opening_angle = 100;
+		this.motor_speed = 10;
+		this.pliers_opening_angle = 40;
 	}
 	
 	boolean connect() {

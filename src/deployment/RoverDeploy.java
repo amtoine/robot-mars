@@ -28,11 +28,12 @@ public class RoverDeploy {
 		rover.land();
 		rover.checkBattery();
 		rover.connect_peripherals();
-		rover.compute_path();
+		rover.compute_path();  
 //		rover.calibrate_origin();
-		
+
 		int nb_missions = 0;
 		for (int i = 0; i < nb_missions; i++) {
+			rover.init_obstacle_detection();
 			while (!rover.mission_done()) {
 				rover.harvest(rover.explore());
 			}
@@ -50,8 +51,8 @@ public class RoverDeploy {
 //		rover.test_navigator_square_antoine();
 //		rover.test_navigator_sweep_antoine();
 		
-		rover.test_travel_antoine();
-		rover.test_rotate_antoine();
+//		rover.test_travel_antoine();
+//		rover.test_rotate_antoine();
 		rover.test_grabber_antoine();
 	}
 }

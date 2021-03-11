@@ -185,7 +185,7 @@ public class Navigator {
 	public void travel(float length) {
 		// same - sign as explained above.
 		// here the rotation of each motor has to be converted in degrees and uses the formula for the length of an arc.
-		int theta = (int)(-length*1000 / Rover.WHEEL_RADIUS * 180 / Math.PI);
+		int theta = (int)(-length / Rover.WHEEL_RADIUS * 180 / Math.PI);
 		this.right.device.rotate(theta, true);
 		this.left.device.rotate( theta, true);
 		while (this.left.device.isMoving() || this.right.device.isMoving()) {
@@ -212,7 +212,7 @@ public class Navigator {
 	 */
 	public void travel(float length, boolean immediate_return) {
 		// same remarks as above.
-		int theta = (int)(-length*1000 / Rover.WHEEL_RADIUS * 180 / Math.PI);
+		int theta = (int)(-length / Rover.WHEEL_RADIUS * 180 / Math.PI);
 		this.right.device.rotate(theta, immediate_return);
 		this.left.device.rotate( theta, immediate_return);
 		if (!immediate_return) {
@@ -258,8 +258,8 @@ public class Navigator {
 		// compute mean of both tachos, i.e.(l_tacho+r_tacho)/2, for more accuracy.
 		// convert result to radians, i.e. ...*(float)Math.PI/180
 		// and convert result to a distance using the formula between length of an arc and angle: arc = angle*radius
-		// do not forget that Rover.WHEEL_RADIUS is in mm -> conversion to m with the 1/1000.
-		float dist = Rover.WHEEL_RADIUS/1000*(l_tacho+r_tacho)/2*(float)Math.PI/180;
+		// do not forget that Rover.WHEEL_RADIUS is in mm -> conversion to m with the 1/1000f.
+		float dist = Rover.WHEEL_RADIUS*(l_tacho+r_tacho)/2*(float)Math.PI/180;
 		// update the location appropriately.
 		Point prev = this.pose.getLocation();
 		this.add_dist(dist);

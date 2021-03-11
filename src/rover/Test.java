@@ -20,5 +20,8 @@ public class Test {
 			System.out.println(Arrays.toString(check_relative_angles));
 	
 		}
+		float  x             = 170													/1000f;
+		System.out.println(x);
+		System.out.println((int)(2 * 1500/(x*1000)));
 	}
 }
