@@ -29,11 +29,16 @@ public class RoverDeploy {
 		rover.checkBattery();
 		rover.connect_peripherals();
 		rover.compute_path();
-		rover.calibrate_origin();
+//		rover.calibrate_origin();
 		
-//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-//		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
+		int nb_missions = 3;
+		for (int i = 0; i < nb_missions; i++) {
+			while (!rover.mission_done()) {
+				rover.harvest(rover.explore());
+			}
+			rover.checkBattery();
+			rover.await();
+		}
 		
 		//###################################################################################################################
 		//### several tests #################################################################################################

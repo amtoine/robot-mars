@@ -138,9 +138,6 @@ class Logger {
 		}
 		logger.write("done");
 		logger.close();
-		
-		
-		
 	}
 
 }

@@ -46,13 +46,14 @@ public class Rover {
 	Navigator nav;
 	
 	/** The width of the ultrasonic sensor's cone. */
-	static final int  x      = 170;
+	static final int  x             = 170													/1000;
 	/**	The length of the travels during calibration time, in mm. */
-	static final int  search_length = 500;
+	static final int  search_length = 500													/1000;
 	/** A margin all around the zone to avoid going out, in mm. */
-	static final int  margin = 50;
+	static final int  margin        = 50													/1000;
 	/** A path of points on the zone. */
-	static final Pose path[] = new Pose[1500/x*2];
+	static final Pose path[] = new Pose[2 * 1500/(x*1000)];
+	
 	/** A list of obstacles detected */
 	Point[] obstacles = new Point[20];
 	/** Index of the last treated waypoint in exploration mode*/
@@ -61,38 +62,38 @@ public class Rover {
 	int j_obst;
 	
 	/**	The length of one side of the landing zone. */
-	static final int land_zone_side = 500;
+	static final int land_zone_side = 500													/1000;
 	
 	
 	/** The diameter of the wheels, expressed in mm. */
-	static final float WHEEL_DIAMETER = 55;
+	static final float WHEEL_DIAMETER = 55													/1000;
 	/** The radius of the wheels, expressed in mm. */
 	static final float WHEEL_RADIUS   = Rover.WHEEL_DIAMETER/2;
 	/** The distance between the two axis of the wheels, expressed in mm. */
-	static final float AXIS_DIFF      = 107;
+	static final float AXIS_DIFF      = 107													/1000;
 	/** The half distance between the two axis of the wheels, expressed in mm. */
 	static final float HALF_AXIS_DIFF = Rover.AXIS_DIFF/2;
 	/** As the battery is full with 9000mV, we assume that the situation is critical below 10%, i.e. 900mV*/
 	private static final int VOLTAGE_THRESHOLD = 900;
 	
 	// position of the ultrasonic sensor w.r.t. the center of rotation of the rover.
-	static final int   ULTRA_Dx    = 70;
-	static final int   ULTRA_Dy    = 70;
+	static final int   ULTRA_Dx    = 70														/1000;
+	static final int   ULTRA_Dy    = 70														/1000;
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
-	static final float MIN_DIST_DETECTION = 30;
+	static final float MIN_DIST_DETECTION = 300												/1000;
 	
 	// position of the pliers w.r.t. the center of rotation of the rover.
-	static final int   PLIERS_Dx    = 100;
+	static final int   PLIERS_Dx    = 100													/1000;
 	
 	/** A map of the whole intervention zone. */
 	static final MapZone map = new Map();
-	/** A map of the recuperation zone which is a subset of the intervention zone. */
+	/** A map of the recovery zone which is a subset of the intervention zone. */
 	static final RecupZone recup_zone = new RecupZone();
 	/** The maximum object size in the zone.
-	 * If two objects are away from more than this threshold, they have to be part of two distinct objetcs. */
-	static final double MAX_OBJECT_SIZE = 0.3;
+	 * If two objects are away from more than this threshold, they have to be part of two distinct objects. */
+	static final double MAX_OBJECT_SIZE = 300												/1000;
 	
 	// private default constructor.
 	private Rover() {
@@ -396,32 +397,27 @@ public class Rover {
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public void explore() {
+	public Point explore() {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
 		
 		// Current pose of the rover before starting exploration
-		this.logger.println(this.nav.getPose());
-		
-//		this.nav.rotate(90);
-//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getX()-Rover.margin);
-//		this.nav.rotate(-90);
-//		this.nav.travel(Rover.land_zone_side-Rover.path[0].getY());
-//		this.nav.rotate(-90);
+		this.logger.println("current pose: " +	this.nav.getPose().getX() + ", " +
+												this.nav.getPose().getY() + ", " +
+												this.nav.getPose().getHeading());
 		
 		Point direction;
 		int angle;
 		float d;
 		Point detected_obj;
 		
-		//Point obstacles[] = new Point[19];
 		int visits[] = new int[20];
 		boolean harvest_needed = false;
 		
 		while (this.current_wp < Rover.path.length && !harvest_needed) {
 			// compute the direction from current position to the next waypoint
 			direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
-			// the angle of rotation is equal to the angle of the vector 'direction', modulus pi/2.
+			// the angle of rotation is equal to the angle of the vector 'direction', modulus the current heading.
 			angle = (int) (180/Math.PI * direction.angle());
 			
 			// Rotating in direction of next waypoint while scanning
@@ -429,16 +425,18 @@ public class Rover {
 			while (this.nav.isMoving()) {
 				d = this.ultra.read().getValue(); //scanning for obstacles
 				if (d < Double.MAX_VALUE) {
-					detected_obj = this.nav.getPose().pointAt(d, this.nav.getPose().getHeading());
+					detected_obj = this.point_from_ultra(d);
 					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
-						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
+						if (detected_obj.subtract(this.obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
 							this.j_obst++;
 						}
 						visits[this.j_obst]++;
 						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(visits[this.j_obst]-1).add(detected_obj).multiply(1/visits[this.j_obst]);
+						this.obstacles[this.j_obst] = this.obstacles[this.j_obst].multiply(
+								visits[this.j_obst]-1).add(detected_obj).multiply(
+										1/visits[this.j_obst]);
 						if(d<Rover.MIN_DIST_DETECTION) {
 							harvest_needed = true;
 						}
@@ -450,7 +448,7 @@ public class Rover {
 			this.logger.println(this.nav.getPose());
 			
 			// Traveling to the next waypoint while scanning
-			this.nav.setup_travel(direction.length()*1000);
+			this.nav.setup_travel(direction.length());
 			while (this.nav.isMoving()) {
 				d = this.ultra.read().getValue(); // scanning for obstacles
 				if (d < Double.MAX_VALUE) {
@@ -473,8 +471,9 @@ public class Rover {
 				}
 			}
 			this.nav.compute_new_location();
-			this.logger.print("travelled, ");
-			this.logger.println(this.nav.getPose());
+			this.logger.println("travelled pose: " +	this.nav.getPose().getX() + ", " +
+														this.nav.getPose().getY() + ", " +
+														this.nav.getPose().getHeading());
 			
 			this.current_wp++;
 			
@@ -482,17 +481,19 @@ public class Rover {
 
 		this.logger.println("ending exploration mode");
 		this.mode.stop();
+		
+		return this.obstacles[this.j_obst];
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________.
 	 */
-	public void harvest(Point sample, float  dist) {
+	public void harvest(Point sample) {
 		this.logger.println("starting harvest mode");
 		this.mode.enter_harvest_mode();
 		
 		float factor = 0.9f;
 		boolean approach = true;
-		float distance = dist;
+		float distance = this.nav.getPose().getLocation().subtract(sample).length();
 		float prev_distance = distance;
 
 		// an array containing a set of relative angles to check where the sample is 
@@ -516,7 +517,7 @@ public class Rover {
 				boolean found_back = false;
 				for (int i = 0; i < check_relative_angles.length; i++) {
 					this.nav.rotate(check_relative_angles[i]); // rotate to the current checking angle.
-					distance = this.nav.getPose().getLocation().subtract(sample).length(); // get the distance.
+					distance = this.ultra.read().getValue(); // get the distance.
 					if (distance < Float.MAX_VALUE) { // there is something...
 						check_obj = this.point_from_ultra(distance); // compute location.
 						if (Rover.map.inside(check_obj) && !Rover.recup_zone.inside(check_obj)) {
@@ -559,25 +560,35 @@ public class Rover {
 		// approach the sample.
 		this.nav.travel(sample_to_grab.subtract(
 				this.nav.getPose().getLocation().pointAt(
-						Rover.PLIERS_Dx, this.nav.getPose().getHeading())).length()*1000);
+						Rover.PLIERS_Dx, this.nav.getPose().getHeading())).length());
 		// grab the sample.
 		this.pliers.grab();
 		
 		// now that the rover has the sample in its pliers, simply go to the sample zone.
-		// point towards the recup zone.
+		// point towards the recovery zone.
 		Point direction = RecupZone.center.subtract(
 				this.nav.getPose().getLocation().pointAt(
 						Rover.PLIERS_Dx, this.nav.getPose().getHeading()));
 		this.nav.rotate(direction.angle()*180/Math.PI - this.nav.getPose().getHeading());
 		// travel the distance.
-		this.nav.travel(direction.length()*1000 - RecupZone.diameter*1000);
+		this.nav.travel(direction.length() - RecupZone.diameter);
 		// release the sample.
 		this.pliers.release();
-		this.nav.travel(50); // got back to give margin.
+		this.nav.travel(50  /1000); // got back to give margin.
 		this.pliers.grab(); // go to previous pliers state.
 		
 		this.logger.println("ending harvest mode");
-		this.mode.stop();		
+		this.mode.stop();	
+	}
+	/**
+	 * Tells whether a mission is done or not.
+	 * A mission consists of fetching two samples in the zone under 7 minutes. Mission is done when two samples have been
+	 * fetched.
+	 * 
+	 * @return true if the mission is done, i.e. two samples have been fetched, false otherwise.
+	 */
+	public boolean mission_done() {
+		return this.j_obst == 2;
 	}
 	/**
 	 *  _____________________________________________TODO_____________________________________________ (blocking method).
@@ -627,6 +638,15 @@ public class Rover {
 	//###################################################################################################################
 	//### Tools #########################################################################################################
 	//###################################################################################################################
+	/**
+	 * Computes the position of an obstacle detected by the ultrasonic sensor.
+	 * As the sensor is not exactly at the center of rotation of the rover, its position w.r.t. to this center of rotation
+	 * has to be taken into account to have an accurate position for the obstacle.
+	 * 
+	 * @param distance the distance from the sensor to the object, assuming that the sensor is aligned with the axis of
+	 * the rover
+	 * @return the obstacle position, with ultrasonic correction.
+	 */
 	private Point point_from_ultra(float distance) {
 		return this.nav.getPose().pointAt(distance, this.nav.getPose().getHeading());
 //		return this.nav.getPose().getLocation().
@@ -732,14 +752,14 @@ public class Rover {
 		
 		this.logger.println("travel");
 		this.nav.forward();
-		this.nav.travel(10);
+		this.nav.travel(10 /1000);
 		this.logger.println(this.nav.getPose().toString() + ", " + this.right.device.getTachoCount());
 	}
 	
 	public void test_navigator_square_antoine() {
 		for (int i = 0; i < 0; i++) {
 			this.logger.println("travel");
-			this.nav.travel(200);
+			this.nav.travel(200 /1000);
 			this.logger.println("rotate");
 			this.nav.rotate(90);
 		}
@@ -767,7 +787,7 @@ public class Rover {
               									this.nav.getPose().getY() + ", " +
               									this.nav.getPose().getHeading());
 		Button.waitForAnyPress();
-		this.nav.setup_travel(200);
+		this.nav.setup_travel(200 /1000);
 		while (this.nav.isMoving()) {
 			Beeper.beep();
 			System.out.println(this.ultra.read().getValue());
@@ -793,16 +813,22 @@ public class Rover {
 	
 	public void test_travel_antoine() {
 		while (Button.readButtons() != Button.ID_ENTER) {
-			this.nav.travel(500);
+			this.nav.travel(500 /1000);
 			Button.waitForAnyPress();
 		}
 	}
 	
 	public void test_rotate_antoine() {
-		
 		while (Button.readButtons() != Button.ID_ENTER) {
 			this.nav.rotate(90);
 			Button.waitForAnyPress();
 		}
+	}
+	
+	//###################################################################################################################
+	//### Navigator tests ###############################################################################################
+	//###################################################################################################################
+	public void test_grabber_antoine() {
+		this.harvest(new Point(0, 0));
 	}
 }

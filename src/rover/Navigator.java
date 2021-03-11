@@ -180,24 +180,24 @@ public class Navigator {
 	 * The rover travels a certain distance.
 	 * During the process, the location of the rover is updated.
 	 * 
-	 * @param angle the relative distance, in mm.
+	 * @param angle the relative distance, in m.
 	 */
 	public void travel(float length) {
 		// same - sign as explained above.
 		// here the rotation of each motor has to be converted in degrees and uses the formula for the length of an arc.
-		int theta = (int)(-length / Rover.WHEEL_RADIUS * 180 / Math.PI);
+		int theta = (int)(-length*1000 / Rover.WHEEL_RADIUS * 180 / Math.PI);
 		this.right.device.rotate(theta, true);
 		this.left.device.rotate( theta, true);
 		while (this.left.device.isMoving() || this.right.device.isMoving()) {
 			Thread.yield();
 		}
-		// the new location is 'length' mm away, in the direction of the current heading.
-		this.pose.setLocation(this.pose.getLocation().pointAt(length/1000, this.pose.getHeading()));
+		// the new location is 'length' m away, in the direction of the current heading.
+		this.pose.setLocation(this.pose.getLocation().pointAt(length, this.pose.getHeading()));
 	}
 	/**
 	 * Wrapper of the {@link Navigator}{@link #travel(float)} method.
 	 * 
-	 * @param angle the relative distance, in mm.
+	 * @param angle the relative distance, in m.
 	 */
 	public void travel(double length) {
 		this.travel((float)length);
@@ -206,20 +206,20 @@ public class Navigator {
 	 * The rover travels a certain distance.
 	 * During the process, the location of the rover is updated.
 	 * 
-	 * @param angle the relative distance, in mm.
-	 * @param immediate_return if true, the execution continues, allowing the user to do other stuff during tarvel.
+	 * @param angle the relative distance, in m.
+	 * @param immediate_return if true, the execution continues, allowing the user to do other stuff during travel.
 	 * Otherwise, the program halts and waits for the travel to end.
 	 */
 	public void travel(float length, boolean immediate_return) {
 		// same remarks as above.
-		int theta = (int)(-length / Rover.WHEEL_RADIUS * 180 / Math.PI);
+		int theta = (int)(-length*1000 / Rover.WHEEL_RADIUS * 180 / Math.PI);
 		this.right.device.rotate(theta, immediate_return);
 		this.left.device.rotate( theta, immediate_return);
 		if (!immediate_return) {
 			while (this.left.device.isMoving() || this.right.device.isMoving()) {
 				Thread.yield();
 			}
-			this.pose.setLocation(this.pose.getLocation().pointAt(length/1000, this.pose.getHeading()));
+			this.pose.setLocation(this.pose.getLocation().pointAt(length, this.pose.getHeading()));
 		}
 	}
 	/**
@@ -228,7 +228,7 @@ public class Navigator {
 	 * After a travel, setup here, one should consider using {@link Navigator#compute_new_location()} to update the location
 	 * of the rover using tachometers.
 	 * 
-	 * @param length the length of the travel, in mm.
+	 * @param length the length of the travel, in m.
 	 */
 	public void setup_travel(int length) {
 		this.left.device.resetTachoCount();
@@ -238,7 +238,7 @@ public class Navigator {
 	/**
 	 * Wrapper of the {@link Navigator#setup_travel(int)} method.
 	 * 
-	 * @param length the length of the travel, in mm.
+	 * @param length the length of the travel, in m.
 	 * @see Navigator#setup_travel(int)
 	 */
 	public void setup_travel(float length) {
@@ -331,7 +331,7 @@ public class Navigator {
 	public void goTo(Point point) {
 		Point direction = point.subtract(this.pose.getLocation());
 		this.rotateTo(direction.angle()*180/(float)Math.PI); // convert angle to degrees.
-		this.travel(direction.length()*1000); // convert length to mm.
+		this.travel(direction.length());
 		
 		// update location and heading.
 		this.pose.setLocation(point);
@@ -349,7 +349,7 @@ public class Navigator {
 		// same remarks as above.
 		Point direction = point.subtract(this.pose.getLocation());
 		this.rotateTo(direction.angle()*180/(float)Math.PI, immediate_return);
-		this.travel(direction.length()*1000, immediate_return);
+		this.travel(direction.length(), immediate_return);
 		if (!immediate_return) {
 			this.pose.setLocation(point);
 			this.pose.setHeading(direction.angle());
@@ -365,7 +365,7 @@ public class Navigator {
 		// same remarks as above.
 		Point direction = pose.getLocation().subtract(this.pose.getLocation());
 		this.rotateTo(direction.angle()*180/(float)Math.PI);
-		this.travel(direction.length()*1000);
+		this.travel(direction.length());
 		this.rotateTo(pose.getHeading());
 		
 		this.pose = pose;
