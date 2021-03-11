@@ -8,6 +8,8 @@ import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 
+import lejos.robotics.navigation.Pose;
+
 /**
  * Output streams wrapper to help writing stuff in both the console and log files.
  * 
@@ -111,6 +113,10 @@ class Logger {
 			Logger.out.write(value+"\n"); Logger.out.flush();
 			this.log.write(give_date() + " " + value+"\n"); this.log.flush();
 		} catch (IOException e) { System.out.println("unable to write in log.log"); }
+	}
+	
+	void println(Pose pose) {
+		this.println("pose: " +	pose.getX() + ", " + pose.getY() + ", " + pose.getHeading());
 	}
 	
 	void flush() throws IOException {

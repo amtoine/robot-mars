@@ -51,8 +51,14 @@ public class Rover {
 	static final int  search_length = 500;
 	/** A margin all around the zone to avoid going out, in mm. */
 	static final int  margin = 50;
-	/** A closed path of points on the zone. */
-	static final Pose path[] = new Pose[1500/x];
+	/** A path of points on the zone. */
+	static final Pose path[] = new Pose[1500/x*2];
+	/** A list of obstacles detected */
+	Point[] obstacles = new Point[20];
+	/** Index of the last treated waypoint in exploration mode*/
+	int current_wp;
+	/** Index of last treated obstacle*/
+	int j_obst;
 	
 	/**	The length of one side of the landing zone. */
 	static final int land_zone_side = 500;
@@ -75,6 +81,7 @@ public class Rover {
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
+	static final float MIN_DIST_DETECTION = 30;
 	
 	// position of the pliers w.r.t. the center of rotation of the rover.
 	static final int   PLIERS_Dx    = 0;
@@ -103,6 +110,12 @@ public class Rover {
 		this.left   = new Engine(MotorPort.C);
 		
 		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
+		
+		for (int i = 0; i < this.obstacles.length; i++) {
+			this.obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
+		}
+		this.current_wp = 0;
+		this.j_obst = 0;
 	}
 	// private constructor with parameters.
 	private Rover(Port ultrasonic_port, Port color_port,
@@ -117,7 +130,13 @@ public class Rover {
 		this.left   = new Engine(left_motor_port);
 		
 		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
-	}
+		
+		for (int i = 0; i < this.obstacles.length; i++) {
+			this.obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
+		}
+		this.current_wp = 0;
+		this.j_obst = 0;
+}
 	
 	/**
 	 * Default constructor of a Rover.
@@ -385,17 +404,8 @@ public class Rover {
 		this.logger.println("starting exploration mode");
 		this.mode.enter_exploration_mode();
 		
-		// align with first checkpoint.
-		//	compute the direction from current position to the first checkpoint.
-		Point direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
-		// the angle of rotation is equal to the angle of the vector 'direction', modulus pi/2.
-		int angle = (int) (180/Math.PI * direction.angle());
-		this.nav.rotate(this.nav.getPose().getHeading() - angle);
-		this.nav.travel(direction.length()/1000);
-		
-		this.logger.println("X:" +	this.nav.getPose().getX() + " " + 
-							"Y:" +	this.nav.getPose().getY() + " " +
-							"H:" + 	this.nav.getPose().getHeading());
+		// Current pose of the rover before starting exploration
+		this.logger.println(this.nav.getPose());
 		
 //		this.nav.rotate(90);
 //		this.nav.travel(Rover.land_zone_side-Rover.path[0].getX()-Rover.margin);
@@ -403,21 +413,50 @@ public class Rover {
 //		this.nav.travel(Rover.land_zone_side-Rover.path[0].getY());
 //		this.nav.rotate(-90);
 		
+		Point direction;
+		int angle;
 		float d;
 		Point detected_obj;
 		
-		Point obstacles[] = new Point[19];
-		int visits[] = new int[19];
-		for (int i = 0; i < obstacles.length; i++) {
-//			obstacles[i] = new Point(Float.MAX_VALUE, Float.MAX_VALUE);
-			obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
-		}
-		int j = 0;
+		//Point obstacles[] = new Point[19];
+		int visits[] = new int[20];
+		boolean harvest_needed = false;
 		
-		for (int i = 1; i < Rover.path.length; i++) {
-			this.nav.setup_travel((i%2 == 0)? Map.length*1000-2*Rover.x : 2*Rover.x); // start to move towards next point.
+		while (this.current_wp < Rover.path.length && !harvest_needed) {
+			// compute the direction from current position to the next waypoint
+			direction = Rover.path[0].getLocation().subtract(this.nav.getPose().getLocation());
+			// the angle of rotation is equal to the angle of the vector 'direction', modulus pi/2.
+			angle = (int) (180/Math.PI * direction.angle());
+			
+			// Rotating in direction of next waypoint while scanning
+			this.nav.setup_rotate(this.nav.getPose().getHeading() - angle);
 			while (this.nav.isMoving()) {
-				d = this.ultra.read().getValue(); // look at obstacles.
+				d = this.ultra.read().getValue(); //scanning for obstacles
+				if (d < Double.MAX_VALUE) {
+					detected_obj = this.nav.getPose().pointAt(d, this.nav.getPose().getHeading());
+					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
+						this.logger.println("d: " + d);
+						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
+						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
+							this.j_obst++;
+						}
+						visits[this.j_obst]++;
+						// compute incremental mean of the detected object location with previous obstacle.
+						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(visits[this.j_obst]-1).add(detected_obj).multiply(1/visits[this.j_obst]);
+						if(d<Rover.MIN_DIST_DETECTION) {
+							harvest_needed = true;
+						}
+					}
+				}
+			}
+			this.nav.compute_new_heading();
+			this.logger.print("rotated, ");
+			this.logger.println(this.nav.getPose());
+			
+			// Traveling to the next waypoint while scanning
+			this.nav.setup_travel(direction.length()*1000);
+			while (this.nav.isMoving()) {
+				d = this.ultra.read().getValue(); // scanning for obstacles
 				if (d < Double.MAX_VALUE) {
 					// there is something...
 					detected_obj = this.point_from_ultra(d); // compute location.
@@ -425,32 +464,24 @@ public class Rover {
 						// ...inside the map.
 						this.logger.println("d: " + d);
 						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
-						visits[j]++;
+						if (detected_obj.subtract(obstacles[this.j_obst]).length() > Rover.MAX_OBJECT_SIZE) {
+							this.j_obst++;
+						}
+						visits[this.j_obst]++;
 						// compute incremental mean of the detected object location with previous obstacle.
-						obstacles[j] = obstacles[j].multiply(visits[j]-1).add(detected_obj).multiply(1/visits[j]);
+						obstacles[this.j_obst] = obstacles[this.j_obst].multiply(visits[this.j_obst]-1).add(detected_obj).multiply(1/visits[this.j_obst]);
+						if(d<Rover.MIN_DIST_DETECTION) {
+							harvest_needed = true;
+						}
 					}
 				}
 			}
 			this.nav.compute_new_location();
-
-			this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
-			                                      	this.nav.getPose().getY() + ", " +
-			                                      	this.nav.getPose().getHeading());
-			this.nav.setup_rotate(((i%4 == 1) || (i%4 == 2))? -90 : 90);
-			while (this.nav.isMoving()) {
-				d = this.ultra.read().getValue();
-				if (d < Double.MAX_VALUE) {
-					detected_obj = this.nav.getPose().pointAt(d, this.nav.getPose().getHeading());
-					if (Rover.map.inside(detected_obj) && !Rover.recup_zone.inside(detected_obj)) {
-						this.logger.println("d: " + d);
-						this.logger.println("det (X:" +	detected_obj.getX() + " Y:" +	detected_obj.getY() + ")");
-					}
-				}
-			}
-			this.nav.compute_new_heading();
-			this.logger.println("pose rotate: " + 	this.nav.getPose().getX() + ", " +
-                    								this.nav.getPose().getY() + ", " +
-                    								this.nav.getPose().getHeading());
+			this.logger.print("travelled, ");
+			this.logger.println(this.nav.getPose());
+			
+			this.current_wp++;
+			
 		}
 
 //		Point[] res = this.scan();
