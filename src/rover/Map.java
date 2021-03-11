@@ -4,7 +4,7 @@ import lejos.robotics.geometry.Point;
 
 public class Map extends MapZone{
 
-	static final Point center = new Point(1.25f-MapZone.initial_pose.getX(),0.75f-MapZone.initial_pose.getY());
+	static final Point center = new Point(1.25f,0.75f);
 	static final float width = 1.5f;
 	static final float length = 2.5f;
 	
