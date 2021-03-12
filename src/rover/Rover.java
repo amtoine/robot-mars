@@ -587,8 +587,8 @@ public class Rover {
 		this.logger.println("ending harvest mode");
 		this.mode.stop();	
 	}
-	/**
-	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 /**
+	  *_____________________________________________TODO_____________________________________________ (blocking method).
 	 */
 	public void await() {
 		this.logger.println("starting wait mode");
