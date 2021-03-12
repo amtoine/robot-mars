@@ -1,5 +1,6 @@
 package deployment;
 
+import lejos.hardware.Button;
 import lejos.hardware.Sound;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
@@ -31,7 +32,10 @@ public class RoverDeploy {
 		rover.compute_path();  
 //		rover.calibrate_origin();
 
-		int nb_missions = 0;
+		rover.test_grabber_antoine();
+		Button.waitForAnyPress();
+		
+		int nb_missions = 3;
 		for (int i = 0; i < nb_missions; i++) {
 			rover.init_obstacle_detection();
 			while (!rover.mission_done()) {
@@ -53,6 +57,5 @@ public class RoverDeploy {
 		
 //		rover.test_travel_antoine();
 //		rover.test_rotate_antoine();
-		rover.test_grabber_antoine();
 	}
 }

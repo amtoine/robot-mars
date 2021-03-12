@@ -87,7 +87,7 @@ public class Rover {
 	static final float MIN_DIST_DETECTION = 200												/1000f;
 	
 	// position of the pliers w.r.t. the center of rotation of the rover.
-	static final float PLIERS_Dx    = 163													/1000f;
+	static final float PLIERS_Dx    = 135													/1000f;
 	
 	/** A map of the whole intervention zone. */
 	static final MapZone map = new Map();
@@ -234,10 +234,10 @@ public class Rover {
 				{ Beeper.beep();     this.logger.println("con. us: ok"); }
 		else 	{ Beeper.twoBeeps(); this.logger.println("con. us: ko (" + this.ultra.port.getName() + ")");
 		          error +=  1; }
-		if (this.color.connect()) 
-				{ Beeper.beep();     this.logger.println("con. cs: ok"); }
-		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.color.port.getName() + ")");
-		          error +=  2; }
+//		if (this.color.connect()) 
+//				{ Beeper.beep();     this.logger.println("con. cs: ok"); }
+//		else 	{ Beeper.twoBeeps(); this.logger.println("con. cs: ko (" + this.color.port.getName() + ")");
+//		          error +=  2; }
 		if (this.pliers.connect()) 
 				{ Beeper.beep();     this.logger.println("con. pm: ok"); }
 		else 	{ Beeper.twoBeeps(); this.logger.println("con. pm: ko (" + this.pliers.motor.port.getName() + ")");
@@ -546,6 +546,7 @@ public class Rover {
 					}	
 				}
 				if (distance < Rover.MIN_DIST_DETECTION) {
+					
 					approach = false;
 				}
 			}
@@ -879,11 +880,6 @@ public class Rover {
 	//### Grabber tests #################################################################################################
 	//###################################################################################################################
 	public void test_grabber_antoine() {
-		while (Button.readButtons() != Button.ID_ENTER) {
-			this.pliers.release();
-			this.pliers.grab();
-			Button.waitForAnyPress();
-		}
 		this.harvest(new Point(0.75f, 0.75f));
 	}
 }
