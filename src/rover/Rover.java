@@ -2,7 +2,6 @@ package rover;
 
 
 import java.util.Arrays;
-
 import lejos.hardware.Battery;
 import lejos.hardware.Button;
 import lejos.hardware.lcd.LCD;
@@ -364,7 +363,6 @@ public class Rover {
 		}
 		return result;
 	}
-
 	//######################################################################################################################
 	//### Rover Modes ######################################################################################################
 	//######################################################################################################################
@@ -546,7 +544,6 @@ public class Rover {
 					}	
 				}
 				if (distance < Rover.MIN_DIST_DETECTION) {
-					
 					approach = false;
 				}
 			}
