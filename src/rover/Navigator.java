@@ -180,7 +180,7 @@ public class Navigator {
 	 * The rover travels a certain distance.
 	 * During the process, the location of the rover is updated.
 	 * 
-	 * @param angle the relative distance, in m.
+	 * @param length the relative distance, in m.
 	 */
 	public void travel(float length) {
 		// same - sign as explained above.
@@ -197,7 +197,7 @@ public class Navigator {
 	/**
 	 * Wrapper of the {@link Navigator}{@link #travel(float)} method.
 	 * 
-	 * @param angle the relative distance, in m.
+	 * @param length the relative distance, in m.
 	 */
 	public void travel(double length) {
 		this.travel((float)length);
@@ -206,7 +206,7 @@ public class Navigator {
 	 * The rover travels a certain distance.
 	 * During the process, the location of the rover is updated.
 	 * 
-	 * @param angle the relative distance, in m.
+	 * @param length the relative distance, in m.
 	 * @param immediate_return if true, the execution continues, allowing the user to do other stuff during travel.
 	 * Otherwise, the program halts and waits for the travel to end.
 	 */

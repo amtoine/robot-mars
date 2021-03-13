@@ -57,8 +57,6 @@ public class Rover {
 	Point[] obstacles = new Point[20];
 	/** Index of the last treated waypoint in exploration mode*/
 	int current_wp;
-	/** A list of the number of times an obstacle was detected*/
-	int visits[];
 	/** Index of last detected obstacle*/
 	int j_obst;
 	
@@ -79,7 +77,7 @@ public class Rover {
 	
 	// position of the ultrasonic sensor w.r.t. the center of rotation of the rover.
 	static final float ULTRA_Dx    = 126													/1000f;
-	static final float ULTRA_Dy    = 47														/1000f;
+	static final float ULTRA_Dy    = 0														/1000f;
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
@@ -132,7 +130,6 @@ public class Rover {
 		for (int i = 0; i < this.obstacles.length; i++) {
 			this.obstacles[i] = new Point(0, 0); // initialization for the incremental mean computations.
 		}
-		this.visits = new int[20];
 		this.current_wp = 0;
 		this.j_obst = 0;
 	}
