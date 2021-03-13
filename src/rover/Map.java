@@ -1,35 +1,14 @@
 package rover;
 
-import lejos.robotics.mapping.OccupancyGridMap;
+import lejos.robotics.geometry.Point;
 
-/**
- * _____________________________________________TODO_____________________________________________
- * @author _____________________________________________TODO_____________________________________________
- *
- */
-public class Map {
-	/**
-	 * _____________________________________________TODO_____________________________________________
-	 */
-	public OccupancyGridMap map;
+public class Map extends MapZone{
+
+	static final Point center = new Point(1.25f,0.75f);
+	static final float width = 1.5f;
+	static final float length = 2.5f;
 	
-	/**
-	 * _____________________________________________TODO_____________________________________________
-	 * @param res _____________________________________________TODO_____________________________________________
-	 */
-	public Map(double res) {
-		double freeThreshold = res;
-		double occupiedThreshold = res;
-		OccupancyGridMap m = new OccupancyGridMap(150,250,freeThreshold,occupiedThreshold,res);
-		map = m;
+	public boolean inside(Point p) {		
+		return p.x>center.x-(length/2) && p.x<center.x+(length/2) && p.y>center.y-(width/2) && p.y<center.y+(width/2);
 	}
-	
-	
-	
-	
-	//int[][2] recup_zone;
-	//for (int i=0;i<recup_zone.size();i++) {
-	//	map.setOccupied(recup_zone[i][0],recup_zone[i][1],1);
-	//}
-
 }

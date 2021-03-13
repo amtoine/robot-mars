@@ -1,11 +1,9 @@
 package deployment;
 
 import lejos.hardware.Button;
-import lejos.hardware.lcd.LCD;
+import lejos.hardware.Sound;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
-import rover.Beeper;
-import rover.Blinker;
 import rover.Rover;
 
 /**
@@ -22,6 +20,7 @@ public class RoverDeploy {
 	 * @param args java arguments for main methods.
 	 */
 	public static void main(String[] args) {
+		Sound.setVolume(1);
 		//###################################################################################################################
 		//### full mission simulation #######################################################################################
 		//###################################################################################################################
@@ -29,55 +28,34 @@ public class RoverDeploy {
 				                  MotorPort.A, MotorPort.B, MotorPort.C);
 		rover.land();
 		rover.checkBattery();
-		rover.init_peripherals();
-		
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.await();
-		rover.explore(); rover.harvest(); rover.checkBattery(); rover.sleep();
-		
-		//###################################################################################################################
-		//### color sensor tests ############################################################################################
-		//###################################################################################################################
-		float dist;
-		while (Button.readButtons() != Button.ID_ENTER) {
-			dist = rover.take_us_measure();
-			System.out.println(dist);
-		}
-		
-		//###################################################################################################################
-		//### color sensor tests ############################################################################################
-		//###################################################################################################################
-		int id = -1;
-		while (Button.readButtons() != Button.ID_ENTER) {
-			LCD.clear();
-			id = rover.take_cs_measure();
-			System.out.println("id: " + id);
-		}
-		
-		//###################################################################################################################
-		//### motor tests ###################################################################################################
-		//###################################################################################################################
-		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0);
-		Button.waitForAnyPress();
-		Beeper.beep();
-		
-		rover.get_left_motor().setSpeed(90);
-		rover.get_left_motor().rotate(360);
-		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0);
-		Button.waitForAnyPress();
-		Beeper.beep();
+		rover.connect_peripherals();
+		rover.compute_path();  
+//		rover.calibrate_origin();
 
-		rover.get_right_motor().setSpeed(90);
-		rover.get_right_motor().rotate(360);
-		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);
+		rover.test_grabber_antoine();
 		Button.waitForAnyPress();
-		Beeper.beep();
 		
-		rover.get_pliers_motor().setSpeed(90);
-		rover.get_pliers_motor().rotate(360);
-		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0);
-		Button.waitForAnyPress();
-		Beeper.twoBeeps();
+		int nb_missions = 3;
+		for (int i = 0; i < nb_missions; i++) {
+			rover.init_obstacle_detection();
+			while (!rover.mission_done()) {
+				rover.harvest(rover.explore());
+			}
+			rover.checkBattery();
+			rover.await();
+		}
+		
+		//###################################################################################################################
+		//### several tests #################################################################################################
+		//###################################################################################################################
+//		rover.test_ultrasonic_sensor();
+//		rover.test_color_sensor();
+//		rover.test_motors();
+//		rover.test_navigator();
+//		rover.test_navigator_square_antoine();
+//		rover.test_navigator_sweep_antoine();
+		
+//		rover.test_travel_antoine();
+//		rover.test_rotate_antoine();
 	}
-
 }
