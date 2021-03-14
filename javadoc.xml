@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project default="javadoc">
     <target name="javadoc">
-        <javadoc access="public" author="true" classpath="/home/antoine/Documents/supaero_misc/2A/robot-mars/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar" destdir="doc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.8" sourcefiles="src/deployment/RoverDeploy.java" sourcepath="src" splitindex="true" use="true" version="true"/>
+        <javadoc access="private" author="true" classpath="/home/antoine/Documents/supaero_misc/2A/robot-mars/leJOS_EV3_0.9.1-beta/lib/ev3/ev3classes.jar" destdir="doc" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" source="1.8" sourcefiles="src/deployment/RoverDeploy.java" sourcepath="src" splitindex="true" use="true" version="true"/>
     </target>
 </project>

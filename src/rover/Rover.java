@@ -1,6 +1,7 @@
 package rover;
 
 
+import java.io.PrintStream;
 import java.util.Arrays;
 import lejos.hardware.Battery;
 import lejos.hardware.Button;
@@ -25,7 +26,7 @@ import tools.Order;
  * 
  */
 public class Rover {
-	/**	Output stream to write both in the console and in the log file. */
+	/** Output stream to write both in the console and in the log file. */
 	Logger logger;
 	/**	Current mode of the rover, used to broadcast appropriate sound and light effects. */
 	RoverMode mode;
@@ -76,14 +77,20 @@ public class Rover {
 	private static final int VOLTAGE_THRESHOLD = 900;
 	
 	// position of the ultrasonic sensor w.r.t. the center of rotation of the rover.
+	/** Position of the ultrasonic sensor along the x axis relative to the centor of rotation of the rover. */
 	static final float ULTRA_Dx    = 126													/1000f;
+	/** Position of the ultrasonic sensor along the y axis relative to the centor of rotation of the rover. */
 	static final float ULTRA_Dy    = 0														/1000f;
+	/** Squared norm of the position of the ultrasonic sensor relative to the centor of rotation of the rover. */
 	static final float ULTRA_R2    = ULTRA_Dx*ULTRA_Dx + ULTRA_Dy*ULTRA_Dy;
+	/** Norm of the position of the ultrasonic sensor relative to the centor of rotation of the rover, also known as the radius. */
 	static final float ULTRA_R     = (float)Math.sqrt(ULTRA_R2);
+	/** The angle between the axis of the ultrasonic sensor and the x axis of the rover. */
 	static final float ULTRA_THETA = (float)Math.atan2(ULTRA_Dy, ULTRA_Dx);
+	/** A security distance for the ultrasonic sensor. Under a precise measure is unsure. */
 	static final float MIN_DIST_DETECTION = 200												/1000f;
 	
-	// position of the pliers w.r.t. the center of rotation of the rover.
+	/** position of the pliers w.r.t. the center of rotation of the rover. */
 	static final float PLIERS_Dx    = 135													/1000f;
 	
 	/** A map of the whole intervention zone. */
@@ -94,7 +101,12 @@ public class Rover {
 	 * If two objects are away from more than this threshold, they have to be part of two distinct objects. */
 	static final float MAX_OBJECT_SIZE = 300												/1000f;
 	
-	// private default constructor.
+	/**
+	 * Private default constructor.
+	 * It is wrapped by {@link Rover#build()}.
+	 * 
+	 * @see Rover#build()
+	 */
 	private Rover() {
 		this.logger = new Logger();
 		this.mode   = new RoverMode();
@@ -107,7 +119,18 @@ public class Rover {
 		
 		this.nav = new Navigator(MapZone.initial_pose, this.right, this.left);
 	}
-	// private constructor with parameters.
+	/**
+	 * Private constructor with parameters.
+	 * It is wrapped by {@link Rover#build(Port, Port, Port, Port, Port)}.
+	 * 
+	 * @param ultrasonic_port the port the ultrasonic sensor should be connected to.
+	 * @param color_port the port the color sensor should be connected to.
+	 * @param pliers_motor_port the port the pliers motor should be connected to.
+	 * @param right_motor_port the port the right motor should be connected to.
+	 * @param left_motor_port the port the left motor should be connected to.
+	 * 
+	 * @see Rover#build(Port, Port, Port, Port, Port)
+	 */
 	private Rover(Port ultrasonic_port, Port color_port,
 			      Port pliers_motor_port, Port right_motor_port, Port left_motor_port) {
 		this.logger = new Logger();
@@ -291,6 +314,7 @@ public class Rover {
 	}
 	
 	/**
+	 * Scans the neighbourhood of the rover to localize samples. 
 	 * 
 	 * @return an array of detected obstacles
 	 * @deprecated localisation process changed.
@@ -364,7 +388,7 @@ public class Rover {
 	//### Rover Modes ######################################################################################################
 	//######################################################################################################################
 	/**
-	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 *  At the beginning of the missions, the rover lands in the zone and waits for orders. .
 	 */
 	public void land() {
 		this.logger.println("starting landing mode");
@@ -375,7 +399,9 @@ public class Rover {
 		this.mode.stop();		
 	}
 	/**
-	 *  _____________________________________________TODO_____________________________________________.
+	 *  After being woken up by a human, the rover starts exploring it surroundings..
+	 *  @return the position of the obstacle that has been just seen by the sensor to be used by {@link Rover#harvest(Point)}
+	 *  @see Rover#harvest(Point)
 	 */
 	public Point explore() {
 		this.logger.println("starting exploration mode");
@@ -449,7 +475,6 @@ public class Rover {
 														this.nav.getPose().getHeading());
 			
 			this.current_wp++;
-			
 		}
 
 		this.logger.println("ending exploration mode");
@@ -458,7 +483,9 @@ public class Rover {
 		return null;
 	}
 	/**
-	 *  _____________________________________________TODO_____________________________________________.
+	 *  When exploring, the rover might stumble upon samples. It is the place to harvest them.
+	 *  @param sample the position of the obstacle that has been just seen by {@link Rover#explore()}
+	 *  @see Rover#explore()
 	 */
 	public void harvest(Point sample) {
 		this.logger.println("starting harvest mode");
@@ -583,8 +610,8 @@ public class Rover {
 		this.mode.stop();	
 	}
 	 /**
-	  *_____________________________________________TODO_____________________________________________ (blocking method).
-	 */
+	  * Inbetween missions, the specifications tell us that the rover must wait for a human intervention.
+	  */
 	public void await() {
 		this.logger.println("starting wait mode");
 		this.mode.enter_wait_mode();
@@ -594,7 +621,7 @@ public class Rover {
 		this.mode.stop();		
 	}
 	/**
-	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 *  After completing all its missions, the rover enters the sleep mode. It is the end of its life cycle.
 	 */
 	public void sleep() {
 		this.logger.println("starting sleep mode");
@@ -605,7 +632,7 @@ public class Rover {
 		this.mode.stop();		
 	}
 	/**
-	 *  _____________________________________________TODO_____________________________________________ (blocking method).
+	 *  Sometimes, an error can occur. The rover then enters the error mode.
 	 */
 	public void error() {
 		this.logger.println("starting error mode");
@@ -632,20 +659,16 @@ public class Rover {
 	 * @return the obstacle position, with ultrasonic correction.
 	 */
 	private Point point_from_ultra(float distance) {
-		return this.nav.getPose().pointAt(distance, this.nav.getPose().getHeading());
-//		return this.nav.getPose().getLocation().
-//					pointAt(Rover.ULTRA_R, this.nav.getPose().getHeading()+Rover.ULTRA_THETA).
-//					pointAt(distance, this.nav.getPose().getHeading()); // compute location.
+//		return this.nav.getPose().pointAt(distance, this.nav.getPose().getHeading());
+		return this.nav.getPose().getLocation().
+					pointAt(Rover.ULTRA_R, this.nav.getPose().getHeading()+Rover.ULTRA_THETA).
+					pointAt(distance, this.nav.getPose().getHeading()); // compute location.
 	}
 	
-//	public static Point convertPose(boolean relative,Point p,Pose rover_pose) {
-//		if(relative) {
-//			p.x = (p.x-rover_pose.getX());
-//			p.y = (p.y-rover_pose.getY());
-//		}
-//		return p;
-//	}
-
+	/**
+	 * Computes the path of the rover to explore the whole intervention area.
+	 * It is explained more deeply in ./report/report-martian-rover.pdf (see section 3.b.ii)
+	 */
 	public void compute_path() {
 		for (int i = 0; i < Rover.path.length; i++) {
 			float x = ((i%4 == 0) || (i%4 == 3))? Rover.x : Map.length*1000-Rover.x;
@@ -695,185 +718,5 @@ public class Rover {
 			}
 		}
 		return new_sample;
-	}
-	
-	//###################################################################################################################
-	//###################################################################################################################
-	//### Tests #########################################################################################################
-	//###################################################################################################################
-	//###################################################################################################################
-	
-	//###################################################################################################################
-	//### sensors tests #################################################################################################
-	//###################################################################################################################
-	/** */
-	public void test_ultrasonic_sensor() {
-		this.logger.println("starting tests on ultra...");
-		float dist;
-		while (Button.readButtons() != Button.ID_ENTER) {
-			dist = this.ultra.read().getValue();
-			System.out.println(dist);
-		}
-		this.logger.println("ultra done");
-	}
-	/** */
-	public void test_color_sensor() {
-		this.logger.println("starting tests on color...");
-		float id = -1;
-		while (Button.readButtons() != Button.ID_ENTER) {
-			LCD.clear();
-			id = this.color.read().getValue();
-			System.out.println("id: " + id);
-			Button.waitForAnyPress();
-		}
-		this.logger.println("color done");	
-	}
-	
-	//###################################################################################################################
-	//### motors tests ##################################################################################################
-	//###################################################################################################################
-	/** */
-	public void test_motors() {
-		this.logger.println("starting tests on motors...");
-		// reseting the tacho counts.
-		this.pliers.motor.device.resetTachoCount();
-		this.right.device.resetTachoCount();
-		this.left.device.resetTachoCount();
-		
-		Blinker.blink(Blinker.ORANGE, Blinker.FAST, 0); Button.waitForAnyPress(); Beeper.beep();
-		
-		// pliers
-		this.logger.println("closing pliers..."); this.logger.println(this.pliers.getTachoCount());
-		this.pliers.motor.device.setAcceleration(90);
-		this.pliers.grab();
-		while (this.pliers.isMoving()) {
-			this.logger.println(this.pliers.getTachoCount() +
-					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
-		}
-		this.logger.println("releasing pliers..."); this.logger.println(this.pliers.getTachoCount());
-		this.pliers.release();
-		while (this.pliers.isMoving()) {
-			this.logger.println(this.pliers.getTachoCount() +
-					            "(" + this.pliers.motor.device.getRotationSpeed() + ")");
-		}
-		this.logger.println("done");
-		Blinker.blink(Blinker.ORANGE, Blinker.SLOW, 0); Button.waitForAnyPress(); Beeper.beep();
-
-		// right track
-		this.logger.println("rotating right..."); this.logger.println(this.right.device.getTachoCount());
-		this.right.write(new Order(90, 360));  
-		while (this.right.device.isMoving()) {
-			this.logger.println(this.right.device.getTachoCount() + "(" + this.right.device.getRotationSpeed() + ")");
-		}
-		this.logger.println("done");
-		Blinker.blink(Blinker.GREEN, Blinker.SLOW, 0);  Button.waitForAnyPress(); Beeper.beep();
-
-		// left track
-		this.logger.println("rotating left..."); this.logger.println(this.left.device.getTachoCount());
-		this.left.write(new Order(90, 360));  
-		while (this.left.device.isMoving()) {
-			this.logger.println(this.left.device.getTachoCount() + "(" + this.left.device.getRotationSpeed() + ")");
-		}
-		this.logger.println("done");
-		Blinker.blink(Blinker.GREEN, Blinker.STILL, 0); Button.waitForAnyPress(); Beeper.beep();
-
-		// end of tests
-		this.logger.println("motors done");
-	}
-	
-	//###################################################################################################################
-	//### Navigator tests ###############################################################################################
-	//###################################################################################################################
-	/** */
-	public void test_navigator() {
-		Pose pose = this.nav.getPose();
-		this.logger.println("pose before: " +	pose.getX() + ", " +
-												pose.getY() + ", " +
-												this.right.device.getTachoCount());
-		
-		this.logger.println("goTo");
-		this.nav.goTo(new Waypoint(pose.pointAt(100, pose.getHeading()+90)));
-		
-		this.logger.println("travel");
-		this.nav.forward();
-		this.nav.travel(10 /1000f);
-		this.logger.println(this.nav.getPose().toString() + ", " + this.right.device.getTachoCount());
-	}
-	
-	public void test_navigator_square_antoine() {
-		for (int i = 0; i < 0; i++) {
-			this.logger.println("travel");
-			this.nav.travel(200 /1000f);
-			this.logger.println("rotate");
-			this.nav.rotate(90);
-		}
-		
-		this.logger.println("pose: " + this.nav.getPose());
-		Button.waitForAnyPress();
-		
-		Point waypoints[] = new Point[4];
-		waypoints[0] = MapZone.initial_pose.getLocation();
-		Point dir = new Point(200, 0);
-		for (int i = 1; i < waypoints.length; i++) {
-			waypoints[i] = waypoints[i-1].add(dir);
-			dir = dir.leftOrth();
-		}
-		
-		for (int i = 0; i < 4; i++) {
-			this.logger.println(waypoints[i].toString());
-			this.nav.goTo(waypoints[i]);
-			this.nav.rotate(90);
-		}
-	}
-
-	public void test_navigator_sweep_antoine() {
-		this.logger.println("pose before: " +	this.nav.getPose().getX() + ", " +
-              									this.nav.getPose().getY() + ", " +
-              									this.nav.getPose().getHeading());
-		Button.waitForAnyPress();
-		this.nav.setup_travel(200 /1000f);
-		while (this.nav.isMoving()) {
-			Beeper.beep();
-			System.out.println(this.ultra.read().getValue());
-		}
-		this.nav.compute_new_location();
-		this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
-          										this.nav.getPose().getY() + ", " +
-          										this.nav.getPose().getHeading());
-		Button.waitForAnyPress();
-		
-		this.logger.println("pose before: "+this.nav.getPose().toString());
-		this.nav.setup_rotate(90);
-		while (this.nav.isMoving()) {
-			System.out.println(this.ultra.read().getValue());
-			Beeper.beep();
-		}
-		this.nav.compute_new_heading();
-		this.logger.println("pose travel: " +	this.nav.getPose().getX() + ", " +
-              									this.nav.getPose().getY() + ", " +
-              									this.nav.getPose().getHeading());
-		Button.waitForAnyPress();
-	}
-	
-	public void test_travel_antoine() {
-		while (Button.readButtons() != Button.ID_ENTER) {
-			this.nav.travel(500 /1000f);
-			Button.waitForAnyPress();
-		}
-	}
-	
-	public void test_rotate_antoine() {
-		while (Button.readButtons() != Button.ID_ENTER) {
-			this.logger.println("travel");
-			this.nav.rotate(90);
-			Button.waitForAnyPress();
-		}
-	}
-	
-	//###################################################################################################################
-	//### Grabber tests #################################################################################################
-	//###################################################################################################################
-	public void test_grabber_antoine() {
-		this.harvest(new Point(0.75f, 0.75f));
 	}
 }

@@ -19,6 +19,13 @@ public class Navigator {
 	/** The left engine of the rover. */
 	private Engine left;
 	
+	/**
+	 * The way to contruct a Navigator for a Rover.
+	 * 
+	 * @param initialPose the initial pose of the rover.
+	 * @param right the right engine of the rover.
+	 * @param left the left engine of the rover.
+	 */
 	public Navigator(Pose initialPose, Engine right, Engine left) {
 		this.pose = initialPose;
 		this.right = right;
@@ -269,22 +276,38 @@ public class Navigator {
 	//######################################################################################################################
 	//### Getters & Setters. ###############################################################################################
 	//######################################################################################################################
+	/**
+	 * Getter for the 'pose' field.
+	 * @return the pose of the rover at the moment.
+	 */
 	public Pose getPose() {
 		return this.pose;
 	}
-
+	/**
+	 * Getter for the 'right' field.
+	 * @return the right engine of the rover.
+	 */
 	public Engine getRight() {
 		return this.right;
 	}
-
+	/**
+	 * Getter for the 'left' field.
+	 * @return the left engine of the rover.
+	 */
 	public Engine getLeft() {
 		return this.left;
 	}
-	
+	/**
+	 * Setter for the 'heading' subfield of the 'pose' field.
+	 * @param heading the new heading, in degrees.
+	 */
 	public void setHeading(int heading) {
 		this.pose.setHeading(heading);
 	}
-
+	/**
+	 * Setter for the 'heading' subfield of the 'pose' field.
+	 * @param heading the new heading, in degrees.
+	 */
 	public void setHeading(float heading) {
 		this.pose.setHeading((int)heading);
 	}
@@ -372,7 +395,7 @@ public class Navigator {
 	}
 	/**
 	 * 
-	 * @param point
+	 * @param point a point to got to.
 	 * @deprecated use combination of rotations and travels instead.
 	 */
 	public void setup_goTo(Point point) {

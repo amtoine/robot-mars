@@ -69,21 +69,45 @@ class Logger {
 		} catch (FileNotFoundException e) { System.out.println("unable to open " + log_filename); }
 	}
 	
+	/**
+	 * Writes a string without a newline both in the console and in the log file (no auto flush).
+	 * 
+	 * @param str the string to be broadcasted.
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 */
 	void write(String str) throws IOException {
 		Logger.out.write(str);
 		this.log.write(give_date() + " " + str);
 	}
 	
+	/**
+	 * Writes a string with or without a newline both in the console and in the log file (no auto flush).
+	 * 
+	 * @param str the string to be broadcasted.
+	 * @param newline a boolean telling whether or not a new line is required.
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 */
 	void write(String str, boolean newline) throws IOException {
 		if (newline) 	{ Logger.out.write(str+"\n"); this.log.write(give_date() + " " + str+"\n"); }
 		else 			{ Logger.out.write(str);      this.log.write(give_date() + " " + str); }
 	}
 	
+	/**
+	 * Writes a string with a newline both in the console and in the log file (no auto flush).
+	 * 
+	 * @param str the string to be broadcasted.
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 */
 	void writeln(String str) throws IOException {
 		Logger.out.write(str+"\n");
 		this.log.write(give_date() + " " + str+"\n");
 	}
 	
+	/**
+	 * Prints a string without a newline both in the console and in the log file (auto flush).
+	 * 
+	 * @param str the string to be broadcasted.
+	 */
 	void print(String str) {
 		try {
 			Logger.out.write(str); Logger.out.flush();
@@ -115,20 +139,47 @@ class Logger {
 		} catch (IOException e) { System.out.println("unable to write in log.log"); }
 	}
 	
+	/**
+	 * Wrapper of the {@link Logger#println(String)} method to allow printing a Pose
+	 * 
+	 * @param pose the pose to be broadcasted.
+	 */
 	void println(Pose pose) {
 		this.println("pose: " +	pose.getX() + ", " + pose.getY() + ", " + pose.getHeading());
 	}
 	
+	/**
+	 * Flushes the streams.
+	 * Useful after a write method, which comes without autoflush.
+	 * 
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 * 
+	 * @see Logger#write(String)
+	 * @see Logger#write(String, boolean)
+	 * @see Logger#writeln(String)
+	 */
 	void flush() throws IOException {
 		Logger.out.flush();
 		this.log.flush();
 	}
 	
+	/**
+	 * Closes the streams.
+	 * Not to be forgotten after using such streams of data.
+	 * 
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 */
 	void close() throws IOException {
 		Logger.out.close();
 		this.log.close();
 	}
 
+	/**
+	 * Main method to launch the rover in its environment.
+	 * 
+	 * @param args java arguments for main methods.
+	 * @throws IOException if something goes wrong during flushing, an exception is thrown.
+	 */
 	public static void main(String[] args) throws IOException {
 		Logger logger = new Logger();
 		logger.open("log.log");

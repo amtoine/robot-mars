@@ -13,7 +13,9 @@ import tools.Order;
  *
  */
 class Engine extends Peripheral {
+	/** The constant speed of the motors allocated to the wheels of the rover, in degrees per second. */
 	private static final int speed = 150;
+	/** The constant acceleration of the motors allocated to the wheels of the rover, in degrees per second per second. */
 	private static final int acceleration = 150;
 	
 	/** Precision about the Device of an Engine. Here, it is a RegulatedMotor. */

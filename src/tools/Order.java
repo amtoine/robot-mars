@@ -21,11 +21,17 @@ public class Order {
 		this.speed = speed;
 		this.angle = angle;
 	}
-	
+	/**
+	 * Getter for the 'speed' field.
+	 * @return the speed given as an order.
+	 */
 	public int getSpeed() {
 		return this.speed;
 	}
-	
+	/**
+	 * Getter for the 'angle' field.
+	 * @return the angle given as an order.
+	 */
 	public int getAngle() {
 		return this.angle;
 	}

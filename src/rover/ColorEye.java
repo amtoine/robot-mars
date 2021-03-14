@@ -14,7 +14,7 @@ import tools.Order;
 class ColorEye extends Peripheral {
 	/** Precision about the Device of a ColorEye. Here, it is an EV3ColorSensor. */
 	EV3ColorSensor device;
-	
+	/** The threshold between black and white color values. Below ColorEye.threshold, color is black, otherwise white. */
 	static final float threshold = 0.5f;
 	
 	/**

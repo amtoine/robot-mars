@@ -12,11 +12,18 @@ import lejos.robotics.navigation.Pose;
  * @author Claire Ky
  *
  */
-
 abstract class MapZone {
+	/** The initial pose of the rover in the zone. */
 	static final Pose initial_pose = new Pose(0.25f, 0.75f, 0); //in absolute frame
+	/** The center of any extended version of a MapZone. */
 	Point center;
 	
+	/**
+	 * Any map extending MapZone should be able to tell whether is inside or outside the border defining them. 
+	 * 
+	 * @param p the point that one wants to know the belonging to the inside of the MapZone.
+	 * @return true if the point is inside the MapZone, false otherwise.
+	 */
 	abstract boolean inside(Point p);
 
 }

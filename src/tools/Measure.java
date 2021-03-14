@@ -18,6 +18,10 @@ public class Measure {
 		this.value = value;
 	}
 	
+	/**
+	 * Getter for the 'value' field.
+	 * @return the value held by the Measure.
+	 */
 	public float getValue() {
 		return this.value;
 	}
